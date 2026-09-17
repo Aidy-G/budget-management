@@ -705,6 +705,7 @@ export const Navbar = () => {
 
   const handleLogout = () => {
     dispatch(resetUser());
+    sessionStorage.removeItem('schoolBudgetSessionUser');
     navigate('/');
     handleUserProfileClose();
   };

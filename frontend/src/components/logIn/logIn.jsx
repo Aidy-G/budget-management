@@ -26,6 +26,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { alllUsersThunk, getUserById } from "../../Redux/Slices/Users/getUsersThunk";
+import { setUser } from "../../Redux/Slices/Users/userSlice";
 import {
   Box,
   Container,
@@ -259,6 +260,8 @@ export const LogIn = () => {
 
       // בדיקת שם המשתמש
       if (response.payload.userName === name) {
+        dispatch(setUser(response.payload));
+
         if (response.payload.schoolSymbol === 0) {
           navigate('home');
         } else if (response.payload.schoolSymbol !== 0) {

@@ -1,5 +1,6 @@
 
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 import { User } from './User/user';
 
@@ -19,25 +20,47 @@ import { School } from './schools/schools';
 import { Supplier } from './supplier/supplier';
 import { Exp } from './Expenditures/exp2';
 
+const isUserLoggedIn = (currUser) => {
+  return !!currUser && Object.keys(currUser).length > 0 && currUser.schoolSymbol !== -1;
+};
+
+const ProtectedRoute = ({ children }) => {
+  const currUser = useSelector((state) => state.user.currUser);
+
+  if (!isUserLoggedIn(currUser)) {
+    return <Navigate to='/' replace />;
+  }
+
+  return children;
+};
+
+const PublicOnlyRoute = ({ children }) => {
+  const currUser = useSelector((state) => state.user.currUser);
+
+  if (isUserLoggedIn(currUser)) {
+    return <Navigate to={currUser.schoolSymbol === 0 ? '/home' : '/work'} replace />;
+  }
+
+  return children;
+};
+
 export const Routing = () => {
-  
   return (
    <Routes>
-      
-      <Route path='/' element={<LogIn/>} />  
+      <Route path='/' element={<PublicOnlyRoute><LogIn/></PublicOnlyRoute>} />
     
-      <Route path='/home' element={<Home/>} />
-      <Route path='/expenitures' element={<Exp/>} />
-      <Route path='/users' element={<User/>} />
-      <Route path='/suppliers' element={<Supplier/>} />
-      <Route path='/categories' element={<Category />} />
-      <Route path='/schools' element={<School/>} />
-      <Route path='/work' element={<Main/>} />
-      <Route path='/addExpenditure' element={<AddExpenditure/>} />
-      <Route path='/addCategory' element={<AddCategory/>} />
-      <Route path='/addSchool' element={<AddSchool/>} />
-      <Route path='/addSupplier' element={<AddSupplier/>} />
-      <Route path='/supplier' element={<Supplier/>} />
+      <Route path='/home' element={<ProtectedRoute><Home/></ProtectedRoute>} />
+      <Route path='/expenitures' element={<ProtectedRoute><Exp/></ProtectedRoute>} />
+      <Route path='/users' element={<ProtectedRoute><User/></ProtectedRoute>} />
+      <Route path='/suppliers' element={<ProtectedRoute><Supplier/></ProtectedRoute>} />
+      <Route path='/categories' element={<ProtectedRoute><Category /></ProtectedRoute>} />
+      <Route path='/schools' element={<ProtectedRoute><School/></ProtectedRoute>} />
+      <Route path='/work' element={<ProtectedRoute><Main/></ProtectedRoute>} />
+      <Route path='/addExpenditure' element={<ProtectedRoute><AddExpenditure/></ProtectedRoute>} />
+      <Route path='/addCategory' element={<ProtectedRoute><AddCategory/></ProtectedRoute>} />
+      <Route path='/addSchool' element={<ProtectedRoute><AddSchool/></ProtectedRoute>} />
+      <Route path='/addSupplier' element={<ProtectedRoute><AddSupplier/></ProtectedRoute>} />
+      <Route path='/supplier' element={<ProtectedRoute><Supplier/></ProtectedRoute>} />
       </Routes>
    
   );

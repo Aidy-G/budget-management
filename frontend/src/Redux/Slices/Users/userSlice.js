@@ -4,14 +4,27 @@ import { alllUsersThunk, allUsersThunk, getUserById } from './getUsersThunk';
 import { addUserThunk } from './usersThunk';
 // import { allDataThunk } from '../AllData/allDataThunk';
 
+const SESSION_STORAGE_KEY = 'schoolBudgetSessionUser';
 
+const getSavedSessionUser = () => {
+    if (typeof window === 'undefined') {
+        return {};
+    }
 
+    try {
+        const savedUser = sessionStorage.getItem(SESSION_STORAGE_KEY);
+        return savedUser ? JSON.parse(savedUser) : {};
+    } catch (error) {
+        console.error('Error reading saved user session:', error);
+        return {};
+    }
+};
 
 const INITIAL_STATE = {
    allUsers : [],
    alllUsers:[],
    newUser : {},
-   currUser :{},
+   currUser : getSavedSessionUser(),
 
 //    שומר קוד משתמש נוכחי
 //    checkUser : null
@@ -24,10 +37,27 @@ export const userSlice = createSlice({
     initialState: INITIAL_STATE,
 
     reducers:{
+       setUser: (state, action) => {
+           state.currUser = action.payload || {};
+
+           if (typeof window !== 'undefined') {
+              if (action.payload && Object.keys(action.payload).length > 0) {
+                  sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(action.payload));
+              } else {
+                  sessionStorage.removeItem(SESSION_STORAGE_KEY);
+              }
+           }
+       },
+       restoreUserFromSession: (state) => {
+           const savedUser = getSavedSessionUser();
+           state.currUser = savedUser || {};
+       },
        resetUser: (state) => {
-        console.log("cghd77777777777777");
-        
-        state.currUser= {}
+        state.currUser = {};
+
+        if (typeof window !== 'undefined') {
+            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        }
     }
     },
 
@@ -52,23 +82,17 @@ export const userSlice = createSlice({
             state.newUser = action.payload
         })
         builder.addCase(getUserById.fulfilled, (state,action)=>{
-            // state.checkUser = action.payload
-            // if(action.status==204){
-            // state.currUser ='not' 
-
-            // }
-            // if(action.status == 200)
-             state.currUser = action.payload
-            // if(state.checkUser.schoolSymbol == 0000)
-                 
+            state.currUser = action.payload || {};
         })
         builder.addCase(getUserById.rejected, (state,action)=>{
-            state.currUser = undefined
-            state.currUser.schoolSymbol = -1
+            state.currUser = {};
+            if (typeof window !== 'undefined') {
+                sessionStorage.removeItem(SESSION_STORAGE_KEY);
+            }
         })
     }
 });
 
- export const{extraReducers,resetUser} = userSlice.actions;
+ export const { setUser, restoreUserFromSession, resetUser } = userSlice.actions;
  export default userSlice.reducer;
  
