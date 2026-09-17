@@ -421,7 +421,7 @@ const FormButton = styled(Button)(({ theme }) => ({
 }));
 
 export const AddSupplier = (props) => {
-  const setAddSupp = props.setAddSupp;
+  const setOpenSupplierDialog = props.setOpenSupplierDialog;
   const supName = props.supName;
 
   const dispatch = useDispatch();
@@ -603,8 +603,8 @@ export const AddSupplier = (props) => {
         setTimeout(() => {
           setSuccessMessage(false);
 
-          if (setAddSupp) {
-            setAddSupp(false);
+          if (setOpenSupplierDialog) {
+            setOpenSupplierDialog(false);
           }
         }, 3000);
       }
@@ -687,7 +687,7 @@ export const AddSupplier = (props) => {
               backgroundColor: "transparent !important",
             },
           }}
-          onClick={() => setAddSupp(false)}
+          onClick={() => setOpenSupplierDialog(false)}
           disableRipple
           disableFocusRipple
           disableTouchRipple
