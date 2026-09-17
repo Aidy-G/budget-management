@@ -39,7 +39,7 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import { allCategoriesThunk } from "../../Redux/Slices/Categories/getCategoriesThunk";
 import { allSupplierThunk } from "../../Redux/Slices/Suplliers/getSupplierThunk";
-import { addExpThunk } from "../../Redux/Slices/Expenditures/add";
+import { addExpThunk } from "../../Redux/Slices/Expenditures/expenditureThunk";
 import { AddSupplier } from "../supplier/addSupplier";
 import { AddCategory } from "../Categories/addCategory";
 
@@ -339,6 +339,7 @@ const newExp = {
   const handleOpenSupplierDialog = () => {
     console.log("Opening supplier dialog");
     setOpenSupplierDialog(true);
+    debugger;
   };
 
   // Handle opening category dialog
@@ -758,7 +759,7 @@ const newExp = {
               }
             }}>
             <Box sx={{ p: 3 }}>
-              <AddSupplier setOpenSupplierDialog={setOpenSupplierDialog} />
+              <AddSupplier setOpenSupplierDialog={setOpenSupplierDialog} supName={expDetails.supName}/>
             </Box>
           </DialogContent>}
 

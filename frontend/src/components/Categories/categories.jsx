@@ -1,8 +1,4 @@
 
-
-
-
-
 // חידוד קטגוריות בספק
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -53,6 +49,8 @@ import CategoryIcon from "@mui/icons-material/Category";
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import EditIcon from '@mui/icons-material/Edit';
+
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import InfoIcon from '@mui/icons-material/Info';
@@ -494,19 +492,20 @@ export const Category = () => {
 
                       <StyledTableCell align="center">
                         <Button
-                          variant="contained"
-                          size="small"
-                          sx={{
-                            bgcolor: colors.primary,
-                            color: 'white',
-                            borderRadius: 2,
-                            fontWeight: 700,
-                            textTransform: 'none',
-                            fontFamily: 'Rubik, sans-serif',
-                            '&:hover': {
-                              bgcolor: colors.primaryDark,
-                            },
-                          }}
+                            variant="contained"
+                            startIcon={<EditIcon sx={{ marginLeft: '6px' }} />}
+                            sx={{
+                              bgcolor: colors.primary,
+                              color: 'white',
+                              borderRadius: 2,
+                              fontWeight: 700,
+                              textTransform: 'none',
+                              direction: 'ltr',
+                              fontFamily: 'Rubik, sans-serif',
+                              '&:hover': {
+                                bgcolor: colors.primaryDark,
+                              },
+                            }}
                           onClick={() => handleOpenEditDialog(category)}
                         >
                           עריכה
@@ -742,15 +741,5 @@ export const Category = () => {
     </PageContainer>
   );
 };
-
-
-
-
-
-
-
-
-
-
 
 

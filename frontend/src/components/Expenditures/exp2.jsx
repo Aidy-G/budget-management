@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -334,47 +333,7 @@ export const Exp = () => {
     getData();
   }, [dispatch]);
 
-  // עדכון נתונים כאשר הנתונים מהסטור משתנים
-  // useEffect(() => {
-  //   if (currUser.schoolSymbol !== 0) {
-  //     // אם זה משתמש רגיל - השתמש בנתוני בית הספר
-  //     if (currSchool?.expenditures?.length >= 0) {
-  //       setFilteredData(currSchool.expenditures || []);
-        
-  //       // Initialize approval and payment status
-  //       const initialApproval = {};
-  //       const initialPayment = {};
-  //       const initialPaymentAmounts = {};
-  //       (currSchool.expenditures || []).forEach(exp => {
-  //         initialApproval[exp.id] = false;
-  //         initialPayment[exp.id] = false;
-  //         initialPaymentAmounts[exp.id] = exp.expenditureSum;
-  //       });
-  //       setApprovalStatus(initialApproval);
-  //       setPaymentStatus(initialPayment);
-  //       setPaymentAmounts(initialPaymentAmounts);
-  //     }
-  //   } else {
-  //     // אם זה מנהל - השתמש בכל ההוצאות
-  //     if (allExpenditures?.length >= 0) {
-  //       setFilteredData(allExpenditures);
-        
-  //       // Initialize approval and payment status
-  //       const initialApproval = {};
-  //       const initialPayment = {};
-  //       const initialPaymentAmounts = {};
-  //       allExpenditures.forEach(exp => {
-  //         initialApproval[exp.id] = false;
-  //         initialPayment[exp.id] = false;
-  //         initialPaymentAmounts[exp.id] = exp.expenditureSum;
-  //       });
-  //       setApprovalStatus(initialApproval);
-  //       setPaymentStatus(initialPayment);
-  //       setPaymentAmounts(initialPaymentAmounts);
-  //     }
-  //   }
-  // }, [currSchool, allExpenditures, currUser.schoolSymbol]);
-
+ 
 useEffect(() => {
   if (currUser.schoolSymbol !== 0) {
     // אם זה משתמש רגיל - סנן מכל ההוצאות רק את אלה של בית הספר שלו

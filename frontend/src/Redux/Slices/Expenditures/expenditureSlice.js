@@ -1,8 +1,8 @@
 
 import {createSlice} from '@reduxjs/toolkit'
 import { allExpendituresThunk, getExpenditureByIdThunk } from './getExpendituresThunk';
-import { addExpThunk } from './add';
-
+import { addExpThunk } from './expenditureThunk';
+import { updateExpenditureThunk } from './expenditureThunk';
 
 
 const INITIAL_STATE = {
@@ -44,6 +44,14 @@ export const expenditureSlice = createSlice({
             // state.expenditureById = action.payload
             console.log("רק🕳💫💨");
         })
+        builder.addCase(updateExpenditureThunk.fulfilled, (state,action)=>{
+            console.log("update a exp...");
+        })
+        builder.addCase(updateExpenditureThunk.rejected, (state,action)=>{
+            console.log("update rejected");
+        })
+
+        
     }
 });
 

@@ -1,4 +1,3 @@
-
 import {createSlice} from '@reduxjs/toolkit'
 import { allSupplierThunk, getSupplierByNameThunk, getSupplierNameByLNumThunk } from './getSupplierThunk';
 import { addSuppThunk, updateSuppThunk } from './suplliersThunk';

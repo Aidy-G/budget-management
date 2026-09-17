@@ -496,6 +496,7 @@ export const Supplier = () => {
                           </Box>
                         )}
                       </Box>
+
                     </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700 }}>
                       <Box
@@ -521,6 +522,11 @@ export const Supplier = () => {
                     <TableCell align="right" sx={{ fontWeight: 700 }}>
                       פרטי חשבון
                     </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>
+                      עריכת ספק
+                    </TableCell>
+
+
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -537,6 +543,10 @@ export const Supplier = () => {
                             </Typography>
                           </Box>
                         </TableCell>
+                        {/* פרטי חשבון */}
+
+
+                        {/* פרטי חשבון */}
                         <TableCell align="right">
                           <Button
                             variant="text"
@@ -550,18 +560,42 @@ export const Supplier = () => {
                               }
                             }}
                             startIcon={
-                              Array.isArray(expandedRow) && expandedRow.includes(supplier.licensedNum) ?
-                                <KeyboardArrowUpIcon /> :
-                                <KeyboardArrowDownIcon />
+                              Array.isArray(expandedRow) &&
+                                expandedRow.includes(supplier.licensedNum)
+                                ? <KeyboardArrowUpIcon />
+                                : <KeyboardArrowDownIcon />
                             }
                             onClick={() => handleToggleRow(supplier.licensedNum)}
                           >
                             הצג פרטי חשבון
                           </Button>
                         </TableCell>
+
+                        {/* עריכת ספק - האחרון והכי שמאל */}
+                        <TableCell align="right">
+                          <Button
+                            variant="contained"
+                            startIcon={<EditIcon sx={{ marginLeft: '6px' }} />}
+                            sx={{
+                              bgcolor: colors.primary,
+                              color: 'white',
+                              borderRadius: 2,
+                              fontWeight: 700,
+                              textTransform: 'none',
+                              direction: 'ltr',
+                              fontFamily: 'Rubik, sans-serif',
+                              '&:hover': {
+                                bgcolor: colors.primaryDark,
+                              },
+                            }}
+                            onClick={() => handleOpenEditDialog(supplier)}
+                          >
+                            עריכה
+                          </Button>
+                        </TableCell>
                       </TableRow>
                       <TableRow >
-                        <TableCell style={{ paddingBottom: 0, paddingTop: 0, paddingRight: '100px' }} colSpan={6}>
+                        <TableCell style={{ paddingBottom: 0, paddingTop: 0, paddingRight: '100px' }} colSpan={4}>
                           <Collapse in={Array.isArray(expandedRow) && expandedRow.includes(supplier.licensedNum)} timeout="auto" unmountOnExit >
                             <Box sx={{
                               width: '80%',
@@ -635,24 +669,7 @@ export const Supplier = () => {
                                 </Grid>
                               </Grid>
                               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                                <Button
-                                  variant="contained"
-                                  startIcon={<EditIcon sx={{ marginLeft: '6px' }} />}
-                                  sx={{
-                                    bgcolor: colors.primary,
-                                    color: 'white',
-                                    borderRadius: 2,
-                                    fontWeight: 700,
-                                    textTransform: 'none',
-                                    fontFamily: 'Rubik, sans-serif',
-                                    '&:hover': {
-                                      bgcolor: colors.primaryDark,
-                                    },
-                                  }}
-                                  onClick={() => handleOpenEditDialog(supplier)}
-                                >
-                                  עריכת ספק
-                                </Button>
+
                               </Box>
                             </Box>
                           </Collapse>
@@ -661,6 +678,8 @@ export const Supplier = () => {
 
                     </React.Fragment>
                   ))}
+
+
                 </TableBody>
               </Table>
             </StyledTableContainer>
@@ -836,6 +855,7 @@ export const Supplier = () => {
               {openAddDialog && <AddSupplier
                 setAddSupp={setOpenAddDialog}
                 setOpenSupplierDialog={setOpenAddDialog} // הוסף את זה!
+                supName = ''
               />}
             </Box>
 
@@ -895,15 +915,5 @@ export const Supplier = () => {
     </PageContainer>
   );
 };
-
-
-
-
-
-
-
-
-
-
 
 

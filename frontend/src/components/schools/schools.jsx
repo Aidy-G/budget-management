@@ -79,8 +79,10 @@ import { allExpendituresThunk } from '../../Redux/Slices/Expenditures/getExpendi
 import { allCategoriesThunk } from '../../Redux/Slices/Categories/getCategoriesThunk';
 import { updatePaymentsThunk } from '../../Redux/Slices/Payments/updateThunk';
 import { clearPaymentStatus } from '../../Redux/Slices/Payments/paymentsSlice';
+import { updateExpenditureThunk } from '../../Redux/Slices/Expenditures/expenditureThunk';
 
 import './school.css';
+import { de } from 'date-fns/locale';
 
 // Styled components
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -248,6 +250,7 @@ export const School = () => {
   const [showDebtDialog, setShowDebtDialog] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportFileName, setExportFileName] = useState('הוצאות_מוסדות');
+  const [approvalLoading, setApprovalLoading] = useState(null);
 
   // Redux selectors
   const currUser = useSelector(u => u.user.currUser);
@@ -319,34 +322,63 @@ export const School = () => {
       )
     },
     {
-      id: 'אישור',
+      id: 'סטטוס אישור',
       label: 'isAccepted',
-      minWidth: 120,
+      minWidth: 150,
       align: 'center',
       sortable: true,
+
       renderCell: (row) => {
+        debugger;
         const accepted = getExpenditureApprovalStatus(row);
+        const isLoading = approvalLoading === row.id;
+
         return (
-          <Tooltip title={accepted ? 'מאושר' : 'לא מאושר'}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-              {accepted ? (
-                <CheckCircleIcon sx={{ color: '#2e7d32', fontSize: '1.1rem' }} />
-              ) : (
-                <CancelIcon sx={{ color: '#d32f2f', fontSize: '1.1rem' }} />
-              )}
-              <Typography
-                variant="body2"
-                sx={{
-                  color: accepted ? '#2e7d32' : '#d32f2f',
-                  fontWeight: 700,
-                }}
-              >
-                {accepted ? 'מאושר' : 'לא'}
-              </Typography>
-            </Box>
+          <Tooltip
+            title={accepted ? 'לביטול האישור' : 'לאישור'}
+            arrow
+          >
+            <Button
+              variant="outlined"
+              size="small"
+              disabled={isLoading}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleApprovalToggle(row);
+              }}
+              sx={{
+                minWidth: 120,
+                fontWeight: 700,
+                borderRadius: '20px',
+
+                borderColor: accepted
+                  ? '#2e7d32'
+                  : '#d32f2f',
+
+                color: accepted
+                  ? '#2e7d32'
+                  : '#d32f2f',
+
+                '&:hover': {
+                  borderColor: accepted
+                    ? '#1b5e20'
+                    : '#b71c1c',
+
+                  backgroundColor: accepted
+                    ? 'rgba(46, 125, 50, 0.08)'
+                    : 'rgba(211, 47, 47, 0.08)',
+                },
+              }}
+            >
+              {isLoading
+                ? 'מעדכן...'
+                : accepted
+                  ? 'ביטול האישור'
+                  : 'לאישור'}
+            </Button>
           </Tooltip>
         );
-      }
+      },
     },
     {
       id: 'תשלום',
@@ -485,6 +517,40 @@ export const School = () => {
     return value === true || value === 'true' || value === 1 || value === '1';
   };
 
+  //פונקציה לעדכון סטטוס אישור ההוצאה
+  const handleApprovalToggle = async (row) => {
+    debugger;
+    const currentStatus = getExpenditureApprovalStatus(row);
+    const newStatus = !currentStatus;
+
+    try {
+      setApprovalLoading(row.id);
+
+      const result = await dispatch(
+        updateExpenditureThunk({
+          expenditure: row,
+          isAccepted: newStatus,
+        })
+      );
+
+      if (updateExpenditureThunk.fulfilled.match(result)) {
+        console.log('סטטוס האישור עודכן בהצלחה');
+
+        // טעינה מחדש של הנתונים מהשרת
+        await dispatch(allExpendituresThunk());
+      } else {
+        console.error(
+          'שגיאה בעדכון:',
+          result.payload || result.error
+        );
+      }
+    } catch (error) {
+      console.error('שגיאה בעדכון סטטוס האישור:', error);
+    } finally {
+      setApprovalLoading(null);
+    }
+  };
+
   // Data fetching
   const fetchData = async () => {
     setLoading(true);
@@ -537,17 +603,28 @@ export const School = () => {
 
       setFilteredExpenditures(filtered);
 
-      // Initialize payment status and amounts
-      const initialPaymentStatus = {};
-      const initialPaymentAmounts = {};
-
-      filtered.forEach(exp => {
-        initialPaymentStatus[exp.id] = false;
-        initialPaymentAmounts[exp.id] = exp.expenditureSum;
+      // אתחול סטטוס וסכומי תשלום - שומרים על ערכים שהמשתמש כבר הזין,
+      // ומאתחלים רק הוצאות שעדיין אין להן ערך.
+      // כך טעינה מחדש (רענון / עדכון סטטוס אישור) לא מוחקת תשלומים שטרם נשלחו לשרת.
+      setPaymentStatus(prev => {
+        const next = { ...prev };
+        filtered.forEach(exp => {
+          if (!(exp.id in next)) {
+            next[exp.id] = false;
+          }
+        });
+        return next;
       });
 
-      setPaymentStatus(initialPaymentStatus);
-      setPaymentAmounts(initialPaymentAmounts);
+      setPaymentAmounts(prev => {
+        const next = { ...prev };
+        filtered.forEach(exp => {
+          if (!(exp.id in next)) {
+            next[exp.id] = exp.expenditureSum;
+          }
+        });
+        return next;
+      });
     } else {
       setFilteredExpenditures([]);
     }
@@ -810,61 +887,61 @@ export const School = () => {
   //     alert(`שגיאה בעדכון התשלומים: ${error.message}`);
   //   }
   // };
-const sendPaymentUpdatesToServer = async () => {
-  if (updatedPayments.length === 0) {
-    alert('אין תשלומים לעדכן');
-    return;
-  }
-
-  try {
-    // המרה לפורמט Dictionary<int, decimal>
-    const paymentDictionary = {};
-    updatedPayments.forEach(payment => {
-      paymentDictionary[payment.expenditureId] = parseFloat(payment.paidAmount);
-    });
-    console.log('=== DEBUG INFO ===');
-    console.log('Updated payments:', updatedPayments);
-    console.log('Payment dictionary:', paymentDictionary);
-    console.log('Current user:', currUser);
-    console.log('Sending payment dictionary:', paymentDictionary);
-
-    // שלח דרך Redux עם error handling משופר
-    const result = await dispatch(updatePaymentsThunk(paymentDictionary));
-     console.log('=== RESULT ===');
-    console.log('Full result:', result);
-    console.log('Result type:', result.type);
-    console.log('Result payload:', result.payload);
-    console.log('Result error:', result.error);
-    if (updatePaymentsThunk.fulfilled.match(result)) {
-      alert(`עודכנו ${updatedPayments.length} תשלומים בהצלחה!`);
-      setUpdatedPayments([]);
-      await fetchData();
-      dispatch(clearPaymentStatus());
-    } else if (updatePaymentsThunk.rejected.match(result)) {
-      console.error('Redux error:', result.error);
-      console.error('Payload:', result.payload);
-      throw new Error(result.payload?.message || result.error?.message || 'שגיאה לא ידועה');
+  const sendPaymentUpdatesToServer = async () => {
+    if (updatedPayments.length === 0) {
+      alert('אין תשלומים לעדכן');
+      return;
     }
 
-  } catch (error) {
-   console.error('=== CATCH ERROR ===');
-    console.error('Error object:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    
-    
-    // הודעת שגיאה מפורטת יותר
-    if (error.message.includes('fetch')) {
-      alert('שגיאה בחיבור לשרת. בדוק שהשרת פועל.');
-    } else if (error.message.includes('404')) {
-      alert('הנתיב לא נמצא. בדוק את כתובת השרת.');
-    } else if (error.message.includes('500')) {
-      alert('שגיאה בשרת. נסה שוב מאוחר יותר.');
-    } else {
-      alert(`שגיאה בעדכון התשלומים: ${error.message}`);
+    try {
+      // המרה לפורמט Dictionary<int, decimal>
+      const paymentDictionary = {};
+      updatedPayments.forEach(payment => {
+        paymentDictionary[payment.expenditureId] = parseFloat(payment.paidAmount);
+      });
+      console.log('=== DEBUG INFO ===');
+      console.log('Updated payments:', updatedPayments);
+      console.log('Payment dictionary:', paymentDictionary);
+      console.log('Current user:', currUser);
+      console.log('Sending payment dictionary:', paymentDictionary);
+
+      // שלח דרך Redux עם error handling משופר
+      const result = await dispatch(updatePaymentsThunk(paymentDictionary));
+      console.log('=== RESULT ===');
+      console.log('Full result:', result);
+      console.log('Result type:', result.type);
+      console.log('Result payload:', result.payload);
+      console.log('Result error:', result.error);
+      if (updatePaymentsThunk.fulfilled.match(result)) {
+        alert(`עודכנו ${updatedPayments.length} תשלומים בהצלחה!`);
+        setUpdatedPayments([]);
+        await fetchData();
+        dispatch(clearPaymentStatus());
+      } else if (updatePaymentsThunk.rejected.match(result)) {
+        console.error('Redux error:', result.error);
+        console.error('Payload:', result.payload);
+        throw new Error(result.payload?.message || result.error?.message || 'שגיאה לא ידועה');
+      }
+
+    } catch (error) {
+      console.error('=== CATCH ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+
+
+      // הודעת שגיאה מפורטת יותר
+      if (error.message.includes('fetch')) {
+        alert('שגיאה בחיבור לשרת. בדוק שהשרת פועל.');
+      } else if (error.message.includes('404')) {
+        alert('הנתיב לא נמצא. בדוק את כתובת השרת.');
+      } else if (error.message.includes('500')) {
+        alert('שגיאה בשרת. נסה שוב מאוחר יותר.');
+      } else {
+        alert(`שגיאה בעדכון התשלומים: ${error.message}`);
+      }
     }
-  }
-};
+  };
 
 
   const handleSort = (columnId) => {
@@ -937,7 +1014,7 @@ const sendPaymentUpdatesToServer = async () => {
         (paymentAmounts[exp.id] < exp.expenditureSum ? 'תשלום חלקי' : 'שולם במלואו') :
         'לא שולם',
       'סכום ששולם': paymentStatus[exp.id] ? paymentAmounts[exp.id] : 0,
-      'יתרה לתשלום': paymentStatus[exp.exp] ?
+      'יתרה לתשלום': paymentStatus[exp.id] ?
         (exp.expenditureSum - paymentAmounts[exp.id]) :
         exp.expenditureSum
     }));
@@ -1234,22 +1311,11 @@ const sendPaymentUpdatesToServer = async () => {
                             }}
                           >
                             {columns.map((column) => {
-                              if (column.label === 'payment') {
-                                return (
-                                  <TableCell
-                                    key={column.id}
-                                    align={column.align}
-                                    sx={{
-                                      padding: '8px',
-                                      fontSize: '0.875rem',
-                                    }}
-                                  >
-                                    {column.renderCell(row)}
-                                  </TableCell>
-                                );
-                              }
-
+                              // עמודות הצריכות את השורה השלמה ולא רק את הערך הבודד
+                              // (עמודת התשלום ועמודת סטטוס האישור משתמשות ב-row.id ובשדות נוספים)
+                              const columnsWithFullRow = ['payment', 'isAccepted'];
                               const value = row[column.label];
+
                               return (
                                 <TableCell
                                   key={column.id}
@@ -1260,8 +1326,10 @@ const sendPaymentUpdatesToServer = async () => {
                                     whiteSpace: 'nowrap',
                                   }}
                                 >
-                                  {column.renderCell && column.label !== 'payment'
-                                    ? column.renderCell(value)
+                                  {column.renderCell
+                                    ? column.renderCell(
+                                      columnsWithFullRow.includes(column.label) ? row : value
+                                    )
                                     : column.format && typeof value === 'number'
                                       ? column.format(value)
                                       : column.label === 'date'
@@ -1279,7 +1347,7 @@ const sendPaymentUpdatesToServer = async () => {
             </StyledTableContainer>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
               <TablePagination
-                rowsPerPageOptions={[5,10, 25, 50, 100]}
+                rowsPerPageOptions={[5, 10, 25, 50, 100]}
                 component="div"
                 count={filteredExpenditures.length}
                 rowsPerPage={rowsPerPage}
@@ -1780,4 +1848,3 @@ const sendPaymentUpdatesToServer = async () => {
     </StyledPaper >
   );
 };
-
