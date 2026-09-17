@@ -251,6 +251,7 @@ export const School = () => {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportFileName, setExportFileName] = useState('הוצאות_מוסדות');
   const [approvalLoading, setApprovalLoading] = useState(null);
+  const [showApprovedOnly, setShowApprovedOnly] = useState(false);
 
   // Redux selectors
   const currUser = useSelector(u => u.user.currUser);
@@ -591,44 +592,61 @@ export const School = () => {
     }
   }, [allSchools]);
 
+  const filterExpenditures = (baseExpenditures = allExpenditures, query = searchQuery, approvedOnly = showApprovedOnly) => {
+    if (!selectedSchools || selectedSchools.length === 0) return [];
+    if (!baseExpenditures || baseExpenditures.length === 0) return [];
+
+    const selectedSymbols = selectedSchools.map(school => school.schoolSymbol);
+
+    let filtered = baseExpenditures.filter(exp =>
+      selectedSymbols.includes(exp.schoolSymbol) &&
+      (!approvedOnly || getExpenditureApprovalStatus(exp))
+    );
+
+    const trimmedQuery = query?.trim().toLowerCase();
+    if (trimmedQuery) {
+      filtered = filtered.filter(exp =>
+        exp.supplierName?.toLowerCase().includes(trimmedQuery) ||
+        exp.categoryName?.toLowerCase().includes(trimmedQuery) ||
+        exp.ordererName?.toLowerCase().includes(trimmedQuery) ||
+        exp.expenditureSum?.toString().includes(trimmedQuery) ||
+        exp.id?.toString().includes(trimmedQuery)
+      );
+    }
+
+    return filtered;
+  };
+
   // Update filtered expenditures when selected schools or all expenditures change
   useEffect(() => {
-    if (selectedSchools.length > 0 && allExpenditures && allExpenditures.length > 0) {
-      const selectedSymbols = selectedSchools.map(school => school.schoolSymbol);
-
-      // Filter expenditures by selected school symbols
-      const filtered = allExpenditures.filter(exp =>
-        selectedSymbols.includes(exp.schoolSymbol)
-      );
-
-      setFilteredExpenditures(filtered);
-
-      // אתחול סטטוס וסכומי תשלום - שומרים על ערכים שהמשתמש כבר הזין,
-      // ומאתחלים רק הוצאות שעדיין אין להן ערך.
-      // כך טעינה מחדש (רענון / עדכון סטטוס אישור) לא מוחקת תשלומים שטרם נשלחו לשרת.
-      setPaymentStatus(prev => {
-        const next = { ...prev };
-        filtered.forEach(exp => {
-          if (!(exp.id in next)) {
-            next[exp.id] = false;
-          }
-        });
-        return next;
-      });
-
-      setPaymentAmounts(prev => {
-        const next = { ...prev };
-        filtered.forEach(exp => {
-          if (!(exp.id in next)) {
-            next[exp.id] = exp.expenditureSum;
-          }
-        });
-        return next;
-      });
-    } else {
+    if (selectedSchools.length === 0) {
       setFilteredExpenditures([]);
+      return;
     }
-  }, [selectedSchools, allExpenditures]);
+
+    const filtered = filterExpenditures();
+    setFilteredExpenditures(filtered);
+
+    setPaymentStatus(prev => {
+      const next = { ...prev };
+      filtered.forEach(exp => {
+        if (!(exp.id in next)) {
+          next[exp.id] = false;
+        }
+      });
+      return next;
+    });
+
+    setPaymentAmounts(prev => {
+      const next = { ...prev };
+      filtered.forEach(exp => {
+        if (!(exp.id in next)) {
+          next[exp.id] = exp.expenditureSum;
+        }
+      });
+      return next;
+    });
+  }, [selectedSchools, allExpenditures, searchQuery, showApprovedOnly]);
 
   // Fetch debt data for selected schools
   const fetchDebtData = async () => {
@@ -708,50 +726,10 @@ export const School = () => {
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
-
-    if (!event.target.value) {
-      // Reset to all filtered expenditures
-      if (selectedSchools.length > 0 && allExpenditures && allExpenditures.length > 0) {
-        const selectedSymbols = selectedSchools.map(school => school.schoolSymbol);
-        const filtered = allExpenditures.filter(exp =>
-          selectedSymbols.includes(exp.schoolSymbol)
-        );
-        setFilteredExpenditures(filtered);
-      }
-      return;
-    }
-
-    // Filter based on search query
-    const query = event.target.value.toLowerCase();
-
-    if (selectedSchools.length > 0 && allExpenditures && allExpenditures.length > 0) {
-      const selectedSymbols = selectedSchools.map(school => school.schoolSymbol);
-
-      const filtered = allExpenditures.filter(exp =>
-        selectedSymbols.includes(exp.schoolSymbol) && (
-          exp.supplierName?.toLowerCase().includes(query) ||
-          exp.categoryName?.toLowerCase().includes(query) ||
-          exp.ordererName?.toLowerCase().includes(query) ||
-          exp.expenditureSum?.toString().includes(query) ||
-          exp.id?.toString().includes(query)
-        )
-      );
-
-      setFilteredExpenditures(filtered);
-    }
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
-
-    // Reset to all filtered expenditures
-    if (selectedSchools.length > 0 && allExpenditures && allExpenditures.length > 0) {
-      const selectedSymbols = selectedSchools.map(school => school.schoolSymbol);
-      const filtered = allExpenditures.filter(exp =>
-        selectedSymbols.includes(exp.schoolSymbol)
-      );
-      setFilteredExpenditures(filtered);
-    }
   };
 
   const handleRefresh = async () => {
@@ -1153,47 +1131,65 @@ export const School = () => {
         </Box>
 
       </HeaderBox>
-      {selectedSchools.length > 0 && <TextField
-        fullWidth
-        placeholder="חיפוש לפי ספק, קטגוריה, מזמין, סכום או קוד הוצאה..."
-        value={searchQuery}
-        onChange={handleSearchChange}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            width: '37%',
-            height: '50px',
-            marginTop: '10px',
+      {selectedSchools.length > 0 && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, mr: '10%', ml: '10%' }}>
+          <TextField
+            fullWidth
+            placeholder="חיפוש לפי ספק, קטגוריה, מזמין, סכום או קוד הוצאה..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '50px',
+                borderRadius: '30px',
+                backgroundColor: '#ffffff',
+                transition: 'box-shadow 0.3s ease',
+                '&.Mui-focused': {
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#00796b',
+                  borderWidth: '2px',
+                },
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleClearSearch}>
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
 
-            marginRight: '10%',
-            borderRadius: '30px',
-            backgroundColor: '#ffffff',
-            transition: 'box-shadow 0.3s ease',
-            '&.Mui-focused': {
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-
-            },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+          <Button
+            variant={showApprovedOnly ? 'contained' : 'outlined'}
+            onClick={() => setShowApprovedOnly(prev => !prev)}
+            sx={{
+              minWidth: '180px',
+              height: '42px',
+              borderRadius: '30px',
+              fontWeight: 600,
               borderColor: '#00796b',
-              borderWidth: '2px',
-            },
-
-          },
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon color="action" />
-            </InputAdornment>
-          ),
-          endAdornment: searchQuery && (
-            <InputAdornment position="end">
-              <IconButton size="small" onClick={handleClearSearch}>
-                <ClearIcon fontSize="small" />
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />}
+              color: showApprovedOnly ? '#ffffff' : '#00796b',
+              backgroundColor: showApprovedOnly ? '#00796b' : 'transparent',
+              '&:hover': {
+                borderColor: '#00695c',
+                backgroundColor: showApprovedOnly ? '#00695c' : 'rgba(0, 121, 107, 0.08)',
+              },
+            }}
+          >
+            {showApprovedOnly ? 'לכל ההוצאות' : 'הוצאות מאושרות בלבד'}
+          </Button>
+        </Box>
+      )}
       {/* Selected Schools */}
       {/* <Box sx={{ mb: 3 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#263238' }}>
