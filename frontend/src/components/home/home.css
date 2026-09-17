@@ -1,0 +1,410 @@
+/* Blue Theme - Solid and Consistent
+.blue-theme {
+    direction: rtl;
+    color: #1976d2;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  /* Logo and Header */
+  /* .logo-avatar {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .logo-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 24px rgba(25, 118, 210, 0.2) !important;
+  }
+  
+  .main-title {
+    letter-spacing: 0.5px;
+  }
+  
+  /* Buttons */
+  /* .action-button {
+    transition: all 0.3s ease;
+  }
+  
+  .action-button.outlined {
+    border-width: 2px;
+  }
+  
+  .action-button.contained {
+    background-color: #1976d2;
+  }
+  
+  /* Tabs */
+  /* .tabs-container {
+    position: relative;
+    z-index: 1;
+  } */
+  
+  /* .tab-item {
+    position: relative;
+    transition: all 0.3s ease;
+    font-weight: 600;
+  } */
+  
+  /* Feature Cards
+  .feature-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  } */
+/*   
+  .card-header {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .option-avatar {
+    transition: all 0.3s ease;
+    z-index: 2;
+    position: relative;
+  }
+  
+  .option-avatar:hover {
+    transform: scale(1.1);
+  }
+  
+  .option-title {
+    position: relative;
+  }
+  
+  .option-description {
+    line-height: 1.6;
+  }
+  
+  .action-chip {
+    transition: all 0.3s ease;
+  }
+  
+  .action-chip:hover {
+    transform: scale(1.05);
+  }
+   */
+  /* School Cards */
+  /* .school-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .school-avatar {
+    transition: all 0.3s ease;
+    z-index: 2;
+    position: relative;
+  }
+  
+  .school-avatar:hover {
+    transform: scale(1.1);
+  }
+  
+  .school-chips {
+    position: relative;
+    z-index: 2;
+  }
+  
+  .students-chip, .details-chip {
+    transition: all 0.3s ease;
+  }
+  
+  .students-chip:hover, .details-chip:hover {
+    transform: scale(1.05);
+  }
+   */
+  /* Stats Cards */
+  /* .stats-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .stats-avatar {
+    transition: all 0.3s ease;
+    z-index: 2;
+    position: relative;
+  }
+  
+  .stats-avatar:hover {
+    transform: scale(1.1);
+  }
+  
+  .stats-number {
+    font-weight: 700;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .stats-label {
+    position: relative;
+    z-index: 2;
+  }
+   */
+  /* Charts */
+  /* .chart-container {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .chart-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(25, 118, 210, 0.15) !important;
+  }
+  
+  .chart-title {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 20px;
+    padding-bottom: 5px;
+  }
+   */
+  /* CTA Section */
+  /* .cta-container {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .cta-container:hover {
+    box-shadow: 0 12px 24px rgba(25, 118, 210, 0.1) !important;
+  }
+  
+  .cta-title {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .cta-description {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .cta-buttons {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .cta-button {
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
+  }
+  
+  .cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(25, 118, 210, 0.15) !important;
+  }
+  
+  .cta-button.primary {
+    background-color: #1976d2;
+  }
+  
+  .cta-button.secondary {
+    border-width: 2px;
+  } */
+  
+  /* Footer */
+  /* .footer {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+  
+  .footer:hover {
+    opacity: 1;
+  }
+  
+  .footer-text {
+    font-size: 0.9rem;
+  } */
+  
+  /* Empty state */
+  /* .empty-schools {
+    transition: all 0.3s ease;
+  }
+  
+  .empty-schools:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(25, 118, 210, 0.1) !important;
+  }
+  
+  .add-school-button, .add-school-button-alt {
+    transition: all 0.3s ease;
+  }
+  
+  .add-school-button:hover, .add-school-button-alt:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(25, 118, 210, 0.15) !important;
+  } */
+  
+  /* Responsive adjustments */
+  /* @media (max-width: 960px) {
+    .main-title {
+      font-size: 2.5rem;
+    }
+    
+    .chart-container {
+      height: 400px;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .main-title {
+      font-size: 2rem;
+    }
+    
+    .cta-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .chart-container {
+      height: 350px;
+    }
+    
+    .stats-number {
+      font-size: 2.5rem;
+    }
+  } */
+  
+  /* Focus styles */
+  /* *:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.3);
+  }
+  
+  /* Selection styling */
+  /* ::selection {
+    background-color: rgba(25, 118, 210, 0.2);
+    color: #1976d2;
+  }
+   */
+  /* Smooth scrolling */
+  /* html {
+    scroll-behavior: smooth;
+  }  */ 
+/* Base Styles */
+/* Simple and clean styles for admin home page */
+/* Matching the styling from main.jsx */
+
+
+
+
+/* Matching the styling from main.jsx */
+.MuiTypography-root {
+  font-family: 'Rubik', sans-serif;
+}
+
+.MuiButton-root {
+  font-family: 'Rubik', sans-serif;
+}
+
+.MuiChip-root {
+  font-family: 'Rubik', sans-serif;
+}
+
+.MuiTab-root {
+  font-family: 'Rubik', sans-serif;
+}
+
+/* Simple hover effects */
+.MuiCard-root {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.MuiCard-root:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.MuiButton-root {
+  transition: all 0.3s ease;
+}
+
+.MuiButton-root:hover {
+  transform: translateY(-2px);
+}
+
+/* Clean scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .MuiTypography-h4 {
+    font-size: 1.5rem;
+  }
+  
+  .MuiTypography-h5 {
+    font-size: 1.25rem;
+  }
+}
+
+/* RTL Support */
+body {
+  direction: rtl;
+}
+
+/* Tab Panel Styling */
+.MuiTabs-root {
+  border-radius: 8px 8px 0 0;
+}
+
+.MuiTab-root {
+  font-weight: 600;
+}
+
+/* Card styling */
+.feature-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.feature-card .MuiCardContent-root {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  height: 100%;
+}
+
+/* Welcome section styling */
+.welcome-section {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.welcome-section .MuiAvatar-root {
+  margin: 0 auto 16px;
+}
+
+/* Action buttons */
+.action-button {
+  border-radius: 30px;
+  padding: 8px 24px;
+  font-weight: 600;
+}

@@ -1,0 +1,108 @@
+/* Expenditure Component Styles */
+.expenditures-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header with icon */
+.header-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  font-size: 2.5rem !important;
+  color: #00796b;
+}
+
+/* Table styles */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.expenditures-table {
+  min-width: 650px;
+  table-layout: fixed;
+}
+
+.expenditures-table-container {
+  max-height: 65vh !important;
+  overflow-y: auto;
+}
+
+/* Approval and payment cells */
+.approval-cell, .payment-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.check-icon {
+  color: #4caf50 !important;
+  font-size: 1.3rem !important;
+}
+
+.cancel-icon {
+  color: #f44336 !important;
+  font-size: 1.3rem !important;
+}
+
+/* Payment styles */
+.payment-button {
+  font-size: 0.75rem !important;
+  padding: 4px 10px !important;
+  min-width: 80px !important;
+}
+
+.payment-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.partial-payment-chip {
+  background-color: #fff3e0 !important;
+  color: #e65100 !important;
+  font-weight: 500 !important;
+}
+
+.full-payment-chip {
+  background-color: #e8f5e9 !important;
+  color: #2e7d32 !important;
+  font-weight: 500 !important;
+}
+
+/* Animation for refresh icon */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .expenditures-table-container {
+    max-height: 50vh !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .header-with-icon {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .header-icon {
+    font-size: 2rem !important;
+  }
+  
+  .payment-button {
+    font-size: 0.7rem !important;
+    padding: 3px 8px !important;
+  }
+}

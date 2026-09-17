@@ -1,0 +1,84 @@
+/* Home page specific styles */
+.MuiTypography-root {
+    font-family: 'Rubik', sans-serif;
+  }
+  
+  .MuiButton-root {
+    font-family: 'Rubik', sans-serif;
+  }
+  
+  .MuiChip-root {
+    font-family: 'Rubik', sans-serif;
+  }
+  
+  .MuiTab-root {
+    font-family: 'Rubik', sans-serif;
+  }
+  
+  /* Smooth transitions */
+  .MuiCard-root,
+  .MuiPaper-root,
+  .MuiButton-root,
+  .MuiChip-root,
+  .MuiAvatar-root {
+    transition: all 0.3s ease;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 8px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 8px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+  
+  /* Animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .page-container {
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  /* Hover effects */
+  .feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 20px rgba(0,121,107,0.1);
+  }
+  
+  .stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,121,107,0.08);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 600px) {
+    .MuiTypography-h3 {
+      font-size: 2rem !important;
+    }
+    
+    .MuiTypography-h5 {
+      font-size: 1.25rem !important;
+    }
+  }
+  

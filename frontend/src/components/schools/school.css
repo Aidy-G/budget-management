@@ -1,0 +1,186 @@
+/* SchoolExpensesManager.css */
+
+/* RTL Support */
+html[dir="rtl"] .MuiTableCell-root {
+  text-align: right;
+}
+
+/* General Styles */
+.MuiTableCell-root {
+  font-family: 'Rubik', sans-serif;
+}
+
+.MuiTypography-root {
+  font-family: 'Rubik', sans-serif;
+}
+
+.MuiButton-root {
+  font-family: 'Rubik', sans-serif;
+}
+
+.MuiChip-root {
+  font-family: 'Rubik', sans-serif;
+}
+
+/* Header Icon Animation */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.header-icon {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Refresh Icon Animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Payment Cell Styling */
+.payment-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.partial-payment-chip {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.partial-payment-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
+}
+
+.full-payment-chip {
+  transition: all 0.2s ease;
+}
+
+.full-payment-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+.payment-button {
+  transition: all 0.2s ease;
+}
+
+.payment-button:hover {
+  transform: translateY(-2px);
+}
+
+/* Table Row Hover Effect */
+.MuiTableRow-root.MuiTableRow-hover:hover {
+  background-color: rgba(0, 121, 107, 0.08) !important;
+  transition: background-color 0.2s ease;
+}
+
+/* School Chip Animation */
+.MuiChip-root {
+  transition: all 0.2s ease;
+}
+
+.MuiChip-root:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Hover Effects */
+.MuiCard-root {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.MuiCard-root:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Custom Scrollbar for Webkit Browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Cancel and Check Icons */
+.cancel-icon {
+  color: #d32f2f;
+}
+
+.check-icon {
+  color: #4caf50;
+}
+
+/* Button Hover Effects */
+.MuiButton-contained {
+  transition: all 0.3s ease;
+}
+
+.MuiButton-contained:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 121, 107, 0.3);
+}
+
+.MuiButton-outlined {
+  transition: all 0.3s ease;
+}
+
+.MuiButton-outlined:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 121, 107, 0.1);
+}
+
+/* Table Container */
+.MuiTableContainer-root {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+  .MuiTableCell-root {
+    padding: 8px;
+  }
+  
+  .MuiTypography-h4 {
+    font-size: 1.5rem;
+  }
+  
+  .MuiTypography-h6 {
+    font-size: 1.1rem;
+  }
+}
