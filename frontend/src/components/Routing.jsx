@@ -20,6 +20,9 @@ import { AddSchool } from './schools/addSchool';
 import { Main } from './home/main';
 
 import { School } from './schools/schools';
+import SchoolDetail from './schools/SchoolDetail';
+import Reports from './reports/Reports';
+import SchoolDashboard from './home/SchoolDashboard';
 import { Supplier } from './supplier/supplier';
 import { Exp } from './Expenditures/exp2';
 
@@ -94,18 +97,23 @@ export const Routing = () => {
    <Routes>
       <Route path='/' element={<PublicOnlyRoute><LogIn/></PublicOnlyRoute>} />
     
-      <Route path='/home' element={<ProtectedRoute><Home/></ProtectedRoute>} />
-      <Route path='/expenitures' element={<ProtectedRoute><Exp/></ProtectedRoute>} />
-      <Route path='/users' element={<ProtectedRoute><User/></ProtectedRoute>} />
-      <Route path='/suppliers' element={<ProtectedRoute><Supplier/></ProtectedRoute>} />
-      <Route path='/categories' element={<ProtectedRoute><Category /></ProtectedRoute>} />
-      <Route path='/schools' element={<ProtectedRoute><School/></ProtectedRoute>} />
-      <Route path='/work' element={<ProtectedRoute><Main/></ProtectedRoute>} />
-      <Route path='/addExpenditure' element={<ProtectedRoute><AddExpenditure/></ProtectedRoute>} />
-      <Route path='/addCategory' element={<ProtectedRoute><AddCategory/></ProtectedRoute>} />
-      <Route path='/addSchool' element={<ProtectedRoute><AddSchool/></ProtectedRoute>} />
-      <Route path='/addSupplier' element={<ProtectedRoute><AddSupplier/></ProtectedRoute>} />
-      <Route path='/supplier' element={<ProtectedRoute><Supplier/></ProtectedRoute>} />
+
+      <Route path='/home' element={<Home/>} />
+      <Route path='/expenitures' element={<Exp/>} />
+      <Route path='/users' element={<User/>} />
+      <Route path='/suppliers' element={<Supplier/>} />
+      <Route path='/categories' element={<Category />} />
+      <Route path='/schools' element={<School/>} />
+      <Route path='/school/:symbol' element={<SchoolDetail/>} />
+      <Route path='/reports' element={<Reports/>} />
+      <Route path='/my-school' element={<SchoolDashboard/>} />
+      <Route path='/work' element={<Main/>} />
+      <Route path='/addExpenditure' element={<AddExpenditure/>} />
+      <Route path='/addCategory' element={<AddCategory/>} />
+      <Route path='/addSchool' element={<AddSchool/>} />
+      <Route path='/addSupplier' element={<AddSupplier/>} />
+      <Route path='/supplier' element={<Supplier/>} />
+
       </Routes>
    
   );

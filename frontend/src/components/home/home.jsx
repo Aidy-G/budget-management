@@ -299,6 +299,21 @@ export const Home = () => {
               >
                 הוספת מוסד חדש
               </ActionButton>
+              {currUser?.schoolSymbol && (
+                <ActionButton
+                  variant="outlined"
+                  startIcon={<DashboardIcon sx={{ pl: 1 }} />}
+                  sx={{
+                    width: 250,
+                    borderColor: colors.secondary,
+                    color: colors.secondary,
+                    bgcolor: 'white'
+                  }}
+                  onClick={() => navigate('/my-school')}
+                >
+                  הלוח שלי
+                </ActionButton>
+              )}
             </Box>
           </Box>
         </WelcomeSection>
