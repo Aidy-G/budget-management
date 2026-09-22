@@ -39,6 +39,7 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { CardMedia } from "@mui/material";
+import SchoolDashboard from "./SchoolDashboard";
 
 // Styled components with updated theme - IDENTICAL to main.jsx
 const PageContainer = styled(Box)(({ theme }) => ({
@@ -132,6 +133,8 @@ export const Home = () => {
   const suppliers = useSelector(s => s.supplier?.allSuppliers || []);
   const users = useSelector(s => s.user?.allUsers || []);
   const currUser = useSelector(s => s.user?.currUser || {});
+  const userSymbol = currUser?.schoolSymbol ?? currUser?.institutionId ?? currUser?.schoolId;
+  const isAdmin = String(userSymbol) === '0' || Number(userSymbol) === 0;
 
   const getData = async () => {
     await dispatch(allSchoolsThunk());
@@ -299,21 +302,7 @@ export const Home = () => {
               >
                 הוספת מוסד חדש
               </ActionButton>
-              {currUser?.schoolSymbol && (
-                <ActionButton
-                  variant="outlined"
-                  startIcon={<DashboardIcon sx={{ pl: 1 }} />}
-                  sx={{
-                    width: 250,
-                    borderColor: colors.secondary,
-                    color: colors.secondary,
-                    bgcolor: 'white'
-                  }}
-                  onClick={() => navigate('/my-school')}
-                >
-                  הלוח שלי
-                </ActionButton>
-              )}
+              {/* הלוח מוצג בתוך 'נתונים וסטטיסטיקות' לטובת משתמשי מוסד; כפתור נגרע */}
             </Box>
           </Box>
         </WelcomeSection>
@@ -444,246 +433,252 @@ export const Home = () => {
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>
-          <Box sx={{ mb: 4 }}>
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 700,
-                color: colors.text,
-                mb: 3,
-                display: "flex",
-                alignItems: "center",
-                gap: 1
-              }}
-            >
-              <TrendingUpIcon sx={{ color: colors.primary }} />
-              סטטיסטיקות מערכת
-            </Typography>
-
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6} md={3}>
-                <StatsCard>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${colors.primary}15`,
-                      width: 60,
-                      height: 60,
-                      mb: 2,
-                    }}
-                  >
-                    <SchoolIcon sx={{ color: colors.primary, fontSize: 30 }} />
-                  </Avatar>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: colors.primary, mb: 1 }}>
-                    {schools?.length || 0}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textLight }}>
-                    מוסדות
-                  </Typography>
-                </StatsCard>
-              </Grid>
-
-              <Grid item xs={12} sm={6} md={3}>
-                <StatsCard>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${colors.secondary}15`,
-                      width: 60,
-                      height: 60,
-                      mb: 2,
-                    }}
-                  >
-                    <PeopleIcon sx={{ color: colors.secondary, fontSize: 30 }} />
-                  </Avatar>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: colors.secondary, mb: 1 }}>
-                    {users?.length || 0}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textLight }}>
-                    משתמשים
-                  </Typography>
-                </StatsCard>
-              </Grid>
-
-              <Grid item xs={12} sm={6} md={3}>
-                <StatsCard>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${colors.accent}15`,
-                      width: 60,
-                      height: 60,
-                      mb: 2,
-                    }}
-                  >
-                    <BusinessIcon sx={{ color: colors.accent, fontSize: 30 }} />
-                  </Avatar>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: colors.accent, mb: 1 }}>
-                    {suppliers?.length || 0}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textLight }}>
-                    ספקים
-                  </Typography>
-                </StatsCard>
-              </Grid>
-
-              <Grid item xs={12} sm={6} md={3}>
-                <StatsCard>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${colors.info}15`,
-                      width: 60,
-                      height: 60,
-                      mb: 2,
-                    }}
-                  >
-                    <CategoryIcon sx={{ color: colors.info, fontSize: 30 }} />
-                  </Avatar>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: colors.info, mb: 1 }}>
-                    {categories?.length || 0}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textLight }}>
-                    קטגוריות
-                  </Typography>
-                </StatsCard>
-              </Grid>
-            </Grid>
-          </Box>
-
-          {/* Schools Overview Section */}
-          <Box sx={{ mt: 5 }}>
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 700,
-                color: colors.text,
-                mb: 3,
-                mt: 10,
-                display: "flex",
-                alignItems: "center",
-                gap: 1
-              }}
-            >
-              <SchoolIcon sx={{ color: colors.primary }} />
-              מוסדות במערכת
-            </Typography>
-
-            {schools && schools.length > 0 ? (
-              <Grid container spacing={3}>
-                {schools.slice(0, 6).map((school, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={school.id || index}>
-                    <Card sx={{
-                      borderRadius: 3,
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                      border: `1px solid ${colors.border}`,
-                      transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                      "&:hover": {
-                        transform: "translateY(-5px)",
-                        boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
-                      },
-                    }}>
-                      <CardActionArea onClick={() => navigate(`/school/${school.schoolSymbol}`)}>
-                        <Box sx={{
-                          height: 8,
-                          background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`
-                        }} />
-                        <CardContent>
-                          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                            <Avatar
-                              sx={{
-                                bgcolor: `${colors.primary}15`,
-                                color: colors.primary,
-                                mr: 2
-                              }}
-                            >
-                              <SchoolIcon />
-                            </Avatar>
-                            <Box>
-                              <Typography variant="h6" sx={{ fontWeight: 700, color: colors.text }}>
-                                {school.schoolName || `מוסד ${index + 1}`}
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: colors.textLight }}>
-                                סמל מוסד: {school.schoolSymbol || `00${index + 1}`}
-                              </Typography>
-                            </Box>
-                          </Box>
-
-                          <Divider sx={{ my: 2 }} />
-
-                          <Grid container spacing={2}>
-                            <Grid item xs={6}>
-                              <Box sx={{ textAlign: "center" }}>
-                                <Typography variant="body2" sx={{ color: colors.textLight }}>
-                                  תקציב
-                                </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: colors.primary }}>
-                                  {school.budget ? `${school.budget.toLocaleString()} ₪` : "לא הוגדר"}
-                                </Typography>
-                              </Box>
-                            </Grid>
-                            <Grid item xs={6}>
-                              <Box sx={{ textAlign: "center" }}>
-                                <Typography variant="body2" sx={{ color: colors.textLight }}>
-                                  הוצאות
-                                </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: colors.secondary }}>
-                                  {school.expenditures ? `${school.expenditures.length}` : "0"}
-                                </Typography>
-                              </Box>
-                            </Grid>
-                          </Grid>
-                        </CardContent>
-                      </CardActionArea>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Paper
-                sx={{
-                  p: 3,
-                  textAlign: "center",
-                  borderRadius: 3,
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
-                  border: `1px solid ${colors.border}`,
-                }}
-              >
-                <SchoolIcon sx={{ fontSize: 60, color: `${colors.primary}40`, mb: 2 }} />
-                <Typography variant="h6" sx={{ color: colors.textLight, mb: 2 }}>
-                  לא נמצאו מוסדות במערכת
+          {userSymbol && !isAdmin ? (
+            <SchoolDashboard symbol={userSymbol} />
+          ) : (
+            <>
+              <Box sx={{ mb: 4 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: colors.text,
+                    mb: 3,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1
+                  }}
+                >
+                  <TrendingUpIcon sx={{ color: colors.primary }} />
+                  סטטיסטיקות מערכת
                 </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<AddCircleOutlineIcon />}
-                  sx={{
-                    bgcolor: colors.accent,
-                    color: "white",
-                    "&:hover": {
-                      bgcolor: colors.accentDark,
-                    },
-                    borderRadius: 8,
-                  }}
-                  onClick={() => navigate("/addSchool")}
-                >
-                  הוספת מוסד חדש
-                </Button>
-              </Paper>
-            )}
 
-            {schools && schools.length > 6 && (
-              <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-                <Button
-                  variant="outlined"
-                  sx={{
-                    borderColor: colors.primary,
-                    color: colors.primary,
-                    borderRadius: 30,
-                    px: 4,
-                  }}
-                  onClick={() => navigate("/schools")}
-                >
-                  צפייה בכל המוסדות
-                </Button>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard>
+                      <Avatar
+                        sx={{
+                          bgcolor: `${colors.primary}15`,
+                          width: 60,
+                          height: 60,
+                          mb: 2,
+                        }}
+                      >
+                        <SchoolIcon sx={{ color: colors.primary, fontSize: 30 }} />
+                      </Avatar>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.primary, mb: 1 }}>
+                        {schools?.length || 0}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: colors.textLight }}>
+                        מוסדות
+                      </Typography>
+                    </StatsCard>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard>
+                      <Avatar
+                        sx={{
+                          bgcolor: `${colors.secondary}15`,
+                          width: 60,
+                          height: 60,
+                          mb: 2,
+                        }}
+                      >
+                        <PeopleIcon sx={{ color: colors.secondary, fontSize: 30 }} />
+                      </Avatar>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.secondary, mb: 1 }}>
+                        {users?.length || 0}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: colors.textLight }}>
+                        משתמשים
+                      </Typography>
+                    </StatsCard>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard>
+                      <Avatar
+                        sx={{
+                          bgcolor: `${colors.accent}15`,
+                          width: 60,
+                          height: 60,
+                          mb: 2,
+                        }}
+                      >
+                        <BusinessIcon sx={{ color: colors.accent, fontSize: 30 }} />
+                      </Avatar>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.accent, mb: 1 }}>
+                        {suppliers?.length || 0}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: colors.textLight }}>
+                        ספקים
+                      </Typography>
+                    </StatsCard>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard>
+                      <Avatar
+                        sx={{
+                          bgcolor: `${colors.info}15`,
+                          width: 60,
+                          height: 60,
+                          mb: 2,
+                        }}
+                      >
+                        <CategoryIcon sx={{ color: colors.info, fontSize: 30 }} />
+                      </Avatar>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.info, mb: 1 }}>
+                        {categories?.length || 0}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: colors.textLight }}>
+                        קטגוריות
+                      </Typography>
+                    </StatsCard>
+                  </Grid>
+                </Grid>
               </Box>
-            )}
-          </Box>
+
+              {/* Schools Overview Section */}
+              <Box sx={{ mt: 5 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: colors.text,
+                    mb: 3,
+                    mt: 10,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1
+                  }}
+                >
+                  <SchoolIcon sx={{ color: colors.primary }} />
+                 נתוני המוסדות במערכת
+                </Typography>
+
+                {schools && schools.length > 0 ? (
+                  <Grid container spacing={3}>
+                    {schools.slice(0, 6).map((school, index) => (
+                      <Grid item xs={12} sm={6} md={4} key={school.id || index}>
+                        <Card sx={{
+                          borderRadius: 3,
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                          border: `1px solid ${colors.border}`,
+                          transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                          "&:hover": {
+                            transform: "translateY(-5px)",
+                            boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
+                          },
+                        }}>
+                          <CardActionArea onClick={() => navigate(`/school/${school.schoolSymbol}`)}>
+                            <Box sx={{
+                              height: 8,
+                              background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`
+                            }} />
+                            <CardContent>
+                              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                                <Avatar
+                                  sx={{
+                                    bgcolor: `${colors.primary}15`,
+                                    color: colors.primary,
+                                    mr: 2
+                                  }}
+                                >
+                                  <SchoolIcon />
+                                </Avatar>
+                                <Box>
+                                  <Typography variant="h6" sx={{ fontWeight: 700, color: colors.text }}>
+                                    {school.schoolName || `מוסד ${index + 1}`}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: colors.textLight }}>
+                                    סמל מוסד: {school.schoolSymbol || `00${index + 1}`}
+                                  </Typography>
+                                </Box>
+                              </Box>
+
+                              <Divider sx={{ my: 2 }} />
+
+                              <Grid container spacing={2}>
+                                <Grid item xs={6}>
+                                  <Box sx={{ textAlign: "center" }}>
+                                    <Typography variant="body2" sx={{ color: colors.textLight }}>
+                                      תקציב
+                                    </Typography>
+                                    <Typography variant="h6" sx={{ fontWeight: 700, color: colors.primary }}>
+                                      {school.budget ? `${school.budget.toLocaleString()} ₪` : "לא הוגדר"}
+                                    </Typography>
+                                  </Box>
+                                </Grid>
+                                <Grid item xs={6}>
+                                  <Box sx={{ textAlign: "center" }}>
+                                    <Typography variant="body2" sx={{ color: colors.textLight }}>
+                                      הוצאות
+                                    </Typography>
+                                    <Typography variant="h6" sx={{ fontWeight: 700, color: colors.secondary }}>
+                                      {school.expenditures ? `${school.expenditures.length}` : "0"}
+                                    </Typography>
+                                  </Box>
+                                </Grid>
+                              </Grid>
+                            </CardContent>
+                          </CardActionArea>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                ) : (
+                  <Paper
+                    sx={{
+                      p: 3,
+                      textAlign: "center",
+                      borderRadius: 3,
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+                      border: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    <SchoolIcon sx={{ fontSize: 60, color: `${colors.primary}40`, mb: 2 }} />
+                    <Typography variant="h6" sx={{ color: colors.textLight, mb: 2 }}>
+                      לא נמצאו מוסדות במערכת
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<AddCircleOutlineIcon />}
+                      sx={{
+                        bgcolor: colors.accent,
+                        color: "white",
+                        "&:hover": {
+                          bgcolor: colors.accentDark,
+                        },
+                        borderRadius: 8,
+                      }}
+                      onClick={() => navigate("/addSchool")}
+                    >
+                      הוספת מוסד חדש
+                    </Button>
+                  </Paper>
+                )}
+
+                {schools && schools.length > 6 && (
+                  <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+                    <Button
+                      variant="outlined"
+                      sx={{
+                        borderColor: colors.primary,
+                        color: colors.primary,
+                        borderRadius: 30,
+                        px: 4,
+                      }}
+                      onClick={() => navigate("/schools")}
+                    >
+                      צפייה בכל המוסדות
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            </>
+          )}
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>

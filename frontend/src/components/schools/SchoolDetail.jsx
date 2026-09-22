@@ -9,6 +9,8 @@ import DownloadIcon from '@mui/icons-material/Download';
 import { styled } from '@mui/material/styles';
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import * as XLSX from 'xlsx';
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+
 
 const Header = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -34,6 +36,8 @@ export const SchoolDetail = () => {
   const expenditures = useSelector(s => s.school?.exp || []);
   const totalSum = useSelector(s => s.school?.sumExps || 0);
   const categories = useSelector(s => s.category?.allCategories || []);
+  const currUser = useSelector(s => s.user?.currUser || {});
+  const isAdmin = String(currUser?.schoolSymbol) === '0' || Number(currUser?.schoolSymbol) === 0;
 
   useEffect(() => {
     const load = async () => {
@@ -90,18 +94,83 @@ export const SchoolDetail = () => {
     XLSX.writeFile(wb, `expenditures_${symbol || 'school'}.xlsx`);
   };
 
+  const ActionButton = styled(Button)(({ theme }) => ({
+    borderRadius: 30,
+    padding: "10px 24px",
+    fontWeight: 700,
+    textTransform: "none",
+    fontSize: "1rem",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+    transition: "all 0.3s ease",
+    "&:hover": {
+      transform: "translateY(-2px)",
+      boxShadow: "0 6px 15px rgba(0,0,0,0.15)",
+    },
+  }));
+
+  const colors = {
+    primary: "#00796b", // Teal
+    primaryLight: "#48a999",
+    primaryDark: "#004c40",
+    secondary: "#115293", // Deep Orange
+    secondaryLight: "#ff8a50",
+    secondaryDark: "#c41c00",
+    text: "#263238",
+    textLight: "#546e7a",
+    background: "#f5f5f5",
+    card: "#ffffff",
+    border: "#e0e0e0",
+    success: "#4caf50",
+    warning: "#ff9800",
+    error: "#f44336",
+    info: "#2196f3",
+  };
+
   return (
     <Box sx={{ p: 3 }}>
-      <Header>
+      <Header sx={{ mb: 3, flexWrap: 'wrap', gap: 2 }} dir="rtl">
         <Avatar sx={{ bgcolor: '#00796b', width: 56, height: 56 }}>
           <SchoolIcon />
         </Avatar>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>{school?.schoolName || symbol}</Typography>
           <Typography variant="body2" color="text.secondary">סמל מוסד: {school?.schoolSymbol || symbol}</Typography>
-        </Box>
-        <Box sx={{ ml: 'auto' }}>
-          <Button variant="contained" startIcon={<DownloadIcon />} onClick={exportCSV}>ייצוא הוצאות</Button>
+        </Box >
+        <Box sx={{ direction: 'rtl', mr: 120, display: 'flex', gap: 1, mt: { xs: 2, md: 0 } }} >
+          {isAdmin && (
+            <ActionButton
+              variant="outlined"
+              sx={{
+                borderColor: colors.primary,
+                color: colors.primary,
+                "&:hover": {
+                  borderColor: colors.primaryDark,
+                  bgcolor: `${colors.primary}10`,
+                },
+                fontFamily: 'Rubik, sans-serif',
+              }}
+              onClick={() => navigate(-1)}
+            >
+              חזרה
+              <ArrowBackIcon sx={{ fontSize: 19, marginRight: "7px" }} />
+            </ActionButton>
+
+
+            // <Button variant="outlined" sx={{ mr: 1 }} 
+            // onClick={() => navigate(-1)}>חזור</Button>
+          )}
+          <ActionButton
+            variant="outlined"
+            sx={{
+              borderColor: colors.primary,
+              color: colors.primary,
+              "&:hover": {
+                borderColor: colors.primaryDark,
+                bgcolor: `${colors.primary}10`,
+              },
+              fontFamily: 'Rubik, sans-serif',
+            }} startIcon={<DownloadIcon />}
+            onClick={exportCSV}>ייצוא הוצאות</ActionButton>
         </Box>
       </Header>
 
@@ -118,7 +187,7 @@ export const SchoolDetail = () => {
           <StatCard>
             <CardContent>
               <Typography variant="subtitle2">הוצאות סה"כ</Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>{Number(totalSum || 0).toLocaleString()} ₪</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 900 }}>{Number(totalSum || 0).toLocaleString()} ₪</Typography>
             </CardContent>
           </StatCard>
         </Grid>
@@ -126,7 +195,7 @@ export const SchoolDetail = () => {
           <StatCard>
             <CardContent>
               <Typography variant="subtitle2">יתרת תקציב</Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>{remainingBudget.toLocaleString()} ₪</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 900 }}>{remainingBudget.toLocaleString()} ₪</Typography>
             </CardContent>
           </StatCard>
         </Grid>
@@ -134,7 +203,7 @@ export const SchoolDetail = () => {
           <StatCard>
             <CardContent>
               <Typography variant="subtitle2">מספר הוצאות</Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>{(expenditures || []).length}</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 900 }}>{(expenditures || []).length}</Typography>
             </CardContent>
           </StatCard>
         </Grid>
@@ -173,26 +242,26 @@ export const SchoolDetail = () => {
 
         <Grid item xs={12}>
           <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>הוצאות אחרונות</Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Table>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>הוצאות אחרונות</Typography>
+            <Divider sx={{ mb: 1 }} />
+            <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>תאריך</TableCell>
-                  <TableCell>סכום</TableCell>
-                  <TableCell>קטגוריה</TableCell>
-                  <TableCell>ספק</TableCell>
-                  <TableCell>שם מזמין</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, py: 0.5 }}>שם מזמין</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, py: 0.5 }}>ספק</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, py: 0.5 }}>קטגוריה</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, py: 0.5 }}>סכום</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, py: 0.5 }}>תאריך</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {(expenditures || []).slice(0, 20).map(row => (
                   <TableRow key={row.id} hover>
-                    <TableCell>{new Date(row.date).toLocaleDateString()}</TableCell>
-                    <TableCell>{Number(row.expenditureSum).toLocaleString()} ₪</TableCell>
-                    <TableCell>{row.categoryName}</TableCell>
-                    <TableCell>{row.supplierName}</TableCell>
-                    <TableCell>{row.ordererName}</TableCell>
+                    <TableCell align="right" sx={{ py: 0.5, fontSize: '0.9rem' }}>{row.ordererName}</TableCell>
+                    <TableCell align="right" sx={{ py: 0.5, fontSize: '0.9rem' }}>{row.supplierName}</TableCell>
+                    <TableCell align="right" sx={{ py: 0.5, fontSize: '0.9rem' }}>{row.categoryName}</TableCell>
+                    <TableCell align="right" sx={{ py: 0.5, fontSize: '0.9rem', fontWeight: 700 }}>{Number(row.expenditureSum).toLocaleString()} ₪</TableCell>
+                    <TableCell align="right" sx={{ py: 0.5, fontSize: '0.9rem' }}>{new Date(row.date).toLocaleDateString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

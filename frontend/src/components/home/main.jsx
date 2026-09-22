@@ -31,6 +31,7 @@ import {
   CardMedia
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import SchoolDashboard from "./SchoolDashboard";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -137,6 +138,8 @@ export const Main = () => {
   const suppliers = useSelector(s => s.supplier?.allSuppliers || []);
   const users = useSelector(s => s.user?.allUsers || []);
   const currUser = useSelector(s => s.user?.currUser || {});
+  const userSymbol = currUser?.schoolSymbol ?? currUser?.institutionId ?? currUser?.schoolId;
+  const isAdmin = String(userSymbol) === '0' || Number(userSymbol) === 0;
 
   const getData = async () => {
     await dispatch(allSchoolsThunk());
@@ -275,6 +278,7 @@ export const Main = () => {
               >
                 הוספת הוצאה חדשה
               </ActionButton>
+              {/* הלוח מוצג תחת הטאב 'נתונים וסטטיסטיקות' - כפתור הוסר */}
             </Box>
           </Box>
         </WelcomeSection>
@@ -409,164 +413,169 @@ export const Main = () => {
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>
-          <Box sx={{ mb: 4 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontWeight: 700, 
-                color: colors.text, 
-                mb: 3,
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                fontFamily: 'Rubik, sans-serif',
-              }}
-            >
-              <BarChartIcon sx={{ color: colors.primary }} />
-              סטטיסטיקות מערכת
-            </Typography>
-            
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6} md={3}>
-                <StatsCard>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${colors.primary}15`,
-                      width: 60,
-                      height: 60,
-                      mb: 2,
-                    }}
-                  >
-                    <CategoryIcon sx={{ color: colors.primary, fontSize: 30 }} />
-                  </Avatar>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: colors.primary, mb: 1, fontFamily: 'Rubik, sans-serif' }}>
-                    {categories?.length || 0}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textLight, fontFamily: 'Rubik, sans-serif' }}>
-                    קטגוריות
-                  </Typography>
-                </StatsCard>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <StatsCard>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${colors.secondary}15`,
-                      width: 60,
-                      height: 60,
-                      mb: 2,
-                    }}
-                  >
-                    <BusinessIcon sx={{ color: colors.secondary, fontSize: 30 }} />
-                  </Avatar>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: colors.secondary, mb: 1, fontFamily: 'Rubik, sans-serif' }}>
-                    {suppliers?.length || 0}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textLight, fontFamily: 'Rubik, sans-serif' }}>
-                    ספקים
-                  </Typography>
-                </StatsCard>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <StatsCard>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${colors.accent}15`,
-                      width: 60,
-                      height: 60,
-                      mb: 2,
-                    }}
-                  >
-                    <PeopleIcon sx={{ color: colors.accent, fontSize: 30 }} />
-                  </Avatar>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: colors.accent, mb: 1, fontFamily: 'Rubik, sans-serif' }}>
-                    {users?.length || 0}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textLight, fontFamily: 'Rubik, sans-serif' }}>
-                    משתמשים
-                  </Typography>
-                </StatsCard>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <StatsCard>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${colors.info}15`,
-                      width: 60,
-                      height: 60,
-                      mb: 2,
-                    }}
-                  >
-                    <SchoolIcon sx={{ color: colors.info, fontSize: 30 }} />
-                  </Avatar>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: colors.info, mb: 1, fontFamily: 'Rubik, sans-serif' }}>
-                    {/* Count unique schools */}
-                    {new Set(users?.map(user => user.schoolSymbol)).size || 0}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textLight, fontFamily: 'Rubik, sans-serif' }}>
-                    מוסדות
-                  </Typography>
-                </StatsCard>
-              </Grid>
-            </Grid>
-          </Box>
-          
-          {/* Expenditure Trends Section */}
-          <Box sx={{ mt: 5 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontWeight: 700, 
-                color: colors.text, 
-                mb: 3,
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                fontFamily: 'Rubik, sans-serif',
-                mt:10
-              }}
-            >
-              <TrendingUpIcon sx={{ color: colors.primary }} />
-              מגמות הוצאות
-            </Typography>
-            
-            <Paper 
-              sx={{ 
-                p: 3, 
-                borderRadius: 3, 
-                boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
-                border: `1px solid ${colors.border}`,
-                height: 300,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: `linear-gradient(to bottom, ${colors.card}, ${colors.card})`,
-              }}
-            >
-              <Box sx={{ textAlign: "center" }}>
-                <BarChartIcon sx={{ fontSize: 60, color: `${colors.primary}40`, mb: 2 }} />
-                <Typography variant="h6" sx={{ color: colors.textLight, mb: 2, fontFamily: 'Rubik, sans-serif' }}>
-                  נתוני הוצאות יוצגו כאן
-                </Typography>
-                <Button 
-                  variant="outlined" 
-                  size="small"
+          {userSymbol && !isAdmin ? (
+            <SchoolDashboard symbol={userSymbol} />
+          ) : (
+            <>
+              <Box sx={{ mb: 4 }}>
+                <Typography 
+                  variant="h5" 
                   sx={{ 
-                    borderColor: colors.primary, 
-                    color: colors.primary,
-                    borderRadius: 8,
-                    px: 3,
+                    fontWeight: 700, 
+                    color: colors.text, 
+                    mb: 3,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
                     fontFamily: 'Rubik, sans-serif',
                   }}
                 >
-                  צפייה בדוחות
-                </Button>
+                  <BarChartIcon sx={{ color: colors.primary }} />
+                  סטטיסטיקות מערכת
+                </Typography>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard>
+                      <Avatar
+                        sx={{
+                          bgcolor: `${colors.primary}15`,
+                          width: 60,
+                          height: 60,
+                          mb: 2,
+                        }}
+                      >
+                        <CategoryIcon sx={{ color: colors.primary, fontSize: 30 }} />
+                      </Avatar>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.primary, mb: 1, fontFamily: 'Rubik, sans-serif' }}>
+                        {categories?.length || 0}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: colors.textLight, fontFamily: 'Rubik, sans-serif' }}>
+                        קטגוריות
+                      </Typography>
+                    </StatsCard>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard>
+                      <Avatar
+                        sx={{
+                          bgcolor: `${colors.secondary}15`,
+                          width: 60,
+                          height: 60,
+                          mb: 2,
+                        }}
+                      >
+                        <BusinessIcon sx={{ color: colors.secondary, fontSize: 30 }} />
+                      </Avatar>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.secondary, mb: 1, fontFamily: 'Rubik, sans-serif' }}>
+                        {suppliers?.length || 0}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: colors.textLight, fontFamily: 'Rubik, sans-serif' }}>
+                        ספקים
+                      </Typography>
+                    </StatsCard>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard>
+                      <Avatar
+                        sx={{
+                          bgcolor: `${colors.accent}15`,
+                          width: 60,
+                          height: 60,
+                          mb: 2,
+                        }}
+                      >
+                        <PeopleIcon sx={{ color: colors.accent, fontSize: 30 }} />
+                      </Avatar>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.accent, mb: 1, fontFamily: 'Rubik, sans-serif' }}>
+                        {users?.length || 0}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: colors.textLight, fontFamily: 'Rubik, sans-serif' }}>
+                        משתמשים
+                      </Typography>
+                    </StatsCard>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard>
+                      <Avatar
+                        sx={{
+                          bgcolor: `${colors.info}15`,
+                          width: 60,
+                          height: 60,
+                          mb: 2,
+                        }}
+                      >
+                        <SchoolIcon sx={{ color: colors.info, fontSize: 30 }} />
+                      </Avatar>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.info, mb: 1, fontFamily: 'Rubik, sans-serif' }}>
+                        {new Set(users?.map(user => user.schoolSymbol)).size || 0}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: colors.textLight, fontFamily: 'Rubik, sans-serif' }}>
+                        מוסדות
+                      </Typography>
+                    </StatsCard>
+                  </Grid>
+                </Grid>
               </Box>
-            </Paper>
-          </Box>
+
+              {/* Expenditure Trends Section */}
+              <Box sx={{ mt: 5 }}>
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    fontWeight: 700, 
+                    color: colors.text, 
+                    mb: 3,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    fontFamily: 'Rubik, sans-serif',
+                    mt:10
+                  }}
+                >
+                  <TrendingUpIcon sx={{ color: colors.primary }} />
+                  מגמות הוצאות
+                </Typography>
+
+                <Paper 
+                  sx={{ 
+                    p: 3, 
+                    borderRadius: 3, 
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+                    border: `1px solid ${colors.border}`,
+                    height: 300,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: `linear-gradient(to bottom, ${colors.card}, ${colors.card})`,
+                  }}
+                >
+                  <Box sx={{ textAlign: "center" }}>
+                    <BarChartIcon sx={{ fontSize: 60, color: `${colors.primary}40`, mb: 2 }} />
+                    <Typography variant="h6" sx={{ color: colors.textLight, mb: 2, fontFamily: 'Rubik, sans-serif' }}>
+                      נתוני הוצאות יוצגו כאן
+                    </Typography>
+                    <Button 
+                      variant="outlined" 
+                      size="small"
+                      sx={{ 
+                        borderColor: colors.primary, 
+                        color: colors.primary,
+                        borderRadius: 8,
+                        px: 3,
+                        fontFamily: 'Rubik, sans-serif',
+                      }}
+                    >
+                      צפייה בדוחות
+                    </Button>
+                  </Box>
+                </Paper>
+              </Box>
+            </>
+          )}
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>

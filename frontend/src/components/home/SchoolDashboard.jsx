@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getSchoolBySsymbolThunk, getExpendituresOfSchool, GetSumOfEpendituresOfSchool } from '../../Redux/Slices/Schools/getSchoolThunk';
 import { allCategoriesThunk } from '../../Redux/Slices/Categories/getCategoriesThunk';
-import { Box, Paper, Typography, Grid, Card, CardContent, Button, Avatar, Divider } from '@mui/material';
+import { Box, Paper, Typography, Grid, Card, CardContent, Button, Avatar, Divider, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import SchoolIcon from '@mui/icons-material/School';
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
@@ -19,6 +19,14 @@ const Stat = styled(Card)(({ theme }) => ({ padding: theme.spacing(1.5), borderR
 
 const COLORS = ['#00796b', '#0288d1', '#ff9800', '#4caf50', '#8e24aa'];
 
+const colors = {
+  primary: '#00796b',
+  secondary: '#0288d1',
+  text: '#263238',
+  textLight: '#546e7a',
+  border: '#e0e0e0',
+};
+
 export const SchoolDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -30,13 +38,15 @@ export const SchoolDashboard = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const symbol = currUser?.schoolSymbol ?? currUser?.institutionId ?? currUser?.schoolId;
+    if (symbol === undefined || symbol === null) return;
+
     const load = async () => {
-      if (!currUser?.schoolSymbol) return;
       setLoading(true);
       try {
-        await dispatch(getSchoolBySsymbolThunk(currUser.schoolSymbol)).unwrap();
-        await dispatch(getExpendituresOfSchool(currUser.schoolSymbol)).unwrap();
-        await dispatch(GetSumOfEpendituresOfSchool(currUser.schoolSymbol)).unwrap();
+        await dispatch(getSchoolBySsymbolThunk(symbol)).unwrap();
+        await dispatch(getExpendituresOfSchool(symbol)).unwrap();
+        await dispatch(GetSumOfEpendituresOfSchool(symbol)).unwrap();
         await dispatch(allCategoriesThunk()).unwrap();
       } catch (e) {
         console.error(e);
@@ -44,7 +54,7 @@ export const SchoolDashboard = () => {
       setLoading(false);
     };
     load();
-  }, [currUser?.schoolSymbol, dispatch]);
+  }, [currUser, dispatch]);
 
   const remaining = useMemo(() => {
     const b = Number(school?.budget) || 0;
@@ -78,12 +88,63 @@ export const SchoolDashboard = () => {
     XLSX.writeFile(wb, `${currUser.schoolSymbol || 'school'}_expenditures.xlsx`);
   };
 
-  if (!currUser?.schoolSymbol) {
+  const ActionButton = styled(Button)(({ theme }) => ({
+      borderRadius: 30,
+      padding: "10px 24px",
+      fontWeight: 700,
+      textTransform: "none",
+      fontSize: "1rem",
+      boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+      transition: "all 0.3s ease",
+      "&:hover": {
+        transform: "translateY(-2px)",
+        boxShadow: "0 6px 15px rgba(0,0,0,0.15)",
+      },
+    }));
+
+    
+  const colors = {
+    primary: "#00796b", // Teal
+    primaryLight: "#48a999",
+    primaryDark: "#004c40",
+    secondary: "#115293", // Deep Orange
+    secondaryLight: "#ff8a50",
+    secondaryDark: "#c41c00",
+    text: "#263238",
+    textLight: "#546e7a",
+    background: "#f5f5f5",
+    card: "#ffffff",
+    border: "#e0e0e0",
+    success: "#4caf50",
+    warning: "#ff9800",
+    error: "#f44336",
+    info: "#2196f3",
+  };
+
+
+  const symbol = currUser?.schoolSymbol ?? currUser?.institutionId ?? currUser?.schoolId;
+  if (symbol === undefined || symbol === null) {
     return (
       <Page>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6">אין סמל מוסד למשתמש הנוכחי.</Typography>
-          <Typography variant="body2">רק משתמשים המשויכים למוסד יראו כאן נתונים.</Typography>
+        <Paper sx={{ p: 3, borderRadius: 3 }}>
+          <Typography variant="h6" sx={{ color: colors.text }}>אין סמל מוסד למשתמש הנוכחי</Typography>
+          <Typography variant="body2" sx={{ color: colors.textLight }}>רק משתמשים המשויכים למוסד יראו כאן נתונים. אם אתה אמור להיות משויך למוסד, בדוק פרטי המשתמש.</Typography>
+        </Paper>
+      </Page>
+    );
+  }
+
+  // Admin (schoolSymbol === 0) sees reports instead of single-school dashboard
+  if (Number(symbol) === 0) {
+    return (
+      <Page>
+        <Paper sx={{ p: 3, borderRadius: 3 }}>
+          <Typography variant="h6" sx={{ color: colors.text }}>אתה משתמש בעל הרשאות מנהל</Typography>
+          <Typography variant="body2" sx={{ color: colors.textLight, mb: 2 }}>כלי זה מיועד ללוח בקרה של מוסד בודד. עבור לצפייה בדוחות מערכת או בחר מוסד ספציפי.</Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button variant="contained" onClick={() => navigate('/reports')}>דוחות מערכת</Button>
+            <Button variant="outlined" onClick={() => navigate('/schools')}>בחר מוסד</Button>
+          </Box>
         </Paper>
       </Page>
     );
@@ -94,11 +155,22 @@ export const SchoolDashboard = () => {
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3 }}>
         <Avatar sx={{ bgcolor: '#00796b' }}><SchoolIcon /></Avatar>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>{school?.schoolName || currUser.schoolSymbol}</Typography>
-          <Typography variant="body2" color="text.secondary">סמל: {currUser.schoolSymbol}</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: colors.text }}>{school?.schoolName || symbol}</Typography>
+          <Typography variant="body2" sx={{ color: colors.textLight }}>סמל: {symbol}</Typography>
         </Box>
         <Box sx={{ ml: 'auto' }}>
-          <Button variant="contained" startIcon={<DownloadIcon />} onClick={exportXlsx}>ייצוא</Button>
+
+          
+          <ActionButton
+            variant="contained"
+            startIcon={<DownloadIcon />}
+            onClick={exportXlsx}
+            sx={{direction:'rtl',width:'auto',height:'auto',mr:90}}
+          >
+ייצוא לאקסל
+          </ActionButton>
+           
+           
         </Box>
       </Box>
 
@@ -106,32 +178,32 @@ export const SchoolDashboard = () => {
         <Grid item xs={12} md={3}>
           <Stat>
             <CardContent>
-              <Typography variant="caption">תקציב</Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>{school?.budget ? `${Number(school.budget).toLocaleString()} ₪` : 'לא הוגדר'}</Typography>
+              <Typography variant="caption" sx={{fontSize:15,fontWeight:400}}>תקציב</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 900 }}>{school?.budget ? `${Number(school.budget).toLocaleString()} ₪` : 'לא הוגדר'}</Typography>
             </CardContent>
           </Stat>
         </Grid>
         <Grid item xs={12} md={3}>
           <Stat>
             <CardContent>
-              <Typography variant="caption">הוצאות עד כה</Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>{Number(totalSum || 0).toLocaleString()} ₪</Typography>
+              <Typography variant="caption" sx={{fontSize:15,fontWeight:400}}>הוצאות עד כה</Typography >
+              <Typography variant="h6" sx={{ fontWeight: 900 }}>{Number(totalSum || 0).toLocaleString()} ₪</Typography>
             </CardContent>
           </Stat>
         </Grid>
         <Grid item xs={12} md={3}>
           <Stat>
             <CardContent>
-              <Typography variant="caption">יתרת חשבון</Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>{remaining.toLocaleString()} ₪</Typography>
+              <Typography variant="caption" sx={{fontSize:15,fontWeight:400}}>יתרת חשבון</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 900 }}>{remaining.toLocaleString()} ₪</Typography>
             </CardContent>
           </Stat>
         </Grid>
         <Grid item xs={12} md={3}>
           <Stat>
             <CardContent>
-              <Typography variant="caption">מספר הוצאות</Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>{(expenditures || []).length}</Typography>
+              <Typography variant="caption" sx={{fontSize:15,fontWeight:400}}>מספר הוצאות</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 900 }}>{(expenditures || []).length}</Typography>
             </CardContent>
           </Stat>
         </Grid>
@@ -169,13 +241,28 @@ export const SchoolDashboard = () => {
         <Grid item xs={12}>
           <Paper sx={{ p: 2 }}>
             <Typography sx={{ fontWeight: 700, mb: 1 }}>הוצאות אחרונות</Typography>
-            {(expenditures || []).slice(0, 10).map(e => (
-              <Box key={e.id} sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid #eee' }}>
-                <Typography>{new Date(e.date).toLocaleDateString()}</Typography>
-                <Typography>{e.categoryName}</Typography>
-                <Typography sx={{ fontWeight: 700 }}>{Number(e.expenditureSum).toLocaleString()} ₪</Typography>
-              </Box>
-            ))}
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>תאריך</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>סכום</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>קטגוריה</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>ספק</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>שם מזמין</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(expenditures || []).slice(0, 10).map(e => (
+                  <TableRow key={e.id} hover>
+                    <TableCell align="right" sx={{ py: 0.6, fontSize: '0.95rem' }}>{new Date(e.date).toLocaleDateString()}</TableCell>
+                    <TableCell align="right" sx={{ py: 0.6, fontWeight: 700 }}>{Number(e.expenditureSum).toLocaleString()} ₪</TableCell>
+                    <TableCell align="right" sx={{ py: 0.6 }}>{e.categoryName || '-'}</TableCell>
+                    <TableCell align="right" sx={{ py: 0.6 }}>{e.supplierName || '-'}</TableCell>
+                    <TableCell align="right" sx={{ py: 0.6 }}>{e.ordererName || '-'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </Paper>
         </Grid>
       </Grid>
