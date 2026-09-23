@@ -36,6 +36,10 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InfoIcon from "@mui/icons-material/Info";
 import CloseIcon from '@mui/icons-material/Close';
+import PaymentsIcon from '@mui/icons-material/Payments';
+
+
+
 
 import { allCategoriesThunk } from "../../Redux/Slices/Categories/getCategoriesThunk";
 import { allSupplierThunk } from "../../Redux/Slices/Suplliers/getSupplierThunk";
@@ -556,7 +560,7 @@ export const AddExpenditure = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <AttachMoneyIcon sx={{ color: colors.primary }} />
+                        <PaymentsIcon sx={{ color: colors.primary }} />
                       </InputAdornment>
                     ),
                   }}
