@@ -266,12 +266,21 @@ export const School = () => {
   const columns = [
     { id: 'קוד הוצאה', label: 'id', minWidth: 80, align: 'center', sortable: true },
     {
-      id: 'סמל מוסד',
-      label: 'schoolSymbol',
-      minWidth: 100,
-      align: 'center',
+      id: 'שם מוסד',
+      label: 'schoolName',
+      minWidth: 180,
+      align: 'right',
       sortable: true,
+      renderCell: (row) => {
+        const schoolName = getSchoolNameBySymbol(row?.schoolSymbol ?? row?.schoolSymbol);
 
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <SchoolIcon sx={{ mr: 1, fontSize: '0.875rem', color: '#00796b' }} />
+            {schoolName}
+          </Box>
+        );
+      },
     },
     {
       id: 'סכום הוצאה',
@@ -609,6 +618,7 @@ export const School = () => {
         exp.supplierName?.toLowerCase().includes(trimmedQuery) ||
         exp.categoryName?.toLowerCase().includes(trimmedQuery) ||
         exp.ordererName?.toLowerCase().includes(trimmedQuery) ||
+        getSchoolNameBySymbol(exp.schoolSymbol)?.toLowerCase().includes(trimmedQuery) ||
         exp.expenditureSum?.toString().includes(trimmedQuery) ||
         exp.id?.toString().includes(trimmedQuery)
       );
@@ -940,6 +950,13 @@ export const School = () => {
         const aValue = getExpenditureApprovalStatus(a) ? 1 : 0;
         const bValue = getExpenditureApprovalStatus(b) ? 1 : 0;
         const comparison = aValue - bValue;
+        return direction === 'asc' ? comparison : -comparison;
+      }
+
+      if (label === 'schoolName') {
+        const aValue = getSchoolNameBySymbol(a.schoolSymbol);
+        const bValue = getSchoolNameBySymbol(b.schoolSymbol);
+        const comparison = aValue.localeCompare(bValue);
         return direction === 'asc' ? comparison : -comparison;
       }
 
@@ -1309,7 +1326,7 @@ export const School = () => {
                             {columns.map((column) => {
                               // עמודות הצריכות את השורה השלמה ולא רק את הערך הבודד
                               // (עמודת התשלום ועמודת סטטוס האישור משתמשות ב-row.id ובשדות נוספים)
-                              const columnsWithFullRow = ['payment', 'isAccepted'];
+                              const columnsWithFullRow = ['payment', 'isAccepted', 'schoolName'];
                               const value = row[column.label];
 
                               return (
