@@ -43,7 +43,42 @@ import { addExpThunk } from "../../Redux/Slices/Expenditures/expenditureThunk";
 import { AddSupplier } from "../supplier/addSupplier";
 import { AddCategory } from "../Categories/addCategory";
 
-import { getSchoolBySsymbolThunk, GetSumOfEpendituresOfSchool } from "../../Redux/Slices/Schools/getSchoolThunk";
+import { getSchoolBySsymbolThunk, GetSumOfEpendituresOfSchool, allSchoolsThunk } from "../../Redux/Slices/Schools/getSchoolThunk";
+
+export const buildSharedAmounts = (totalAmount, firstAmount = null, secondAmount = null) => {
+  const numericTotal = Number(totalAmount) || 0;
+
+  if (!Number.isFinite(numericTotal) || numericTotal <= 0) {
+    return { first: 0, second: 0 };
+  }
+
+  const half = numericTotal / 2;
+
+  if (firstAmount !== null && firstAmount !== undefined) {
+    const nextFirst = Math.max(0, Number(firstAmount) || 0);
+    const nextSecond = Math.max(0, Number(numericTotal - nextFirst) || 0);
+
+    return {
+      first: Number(nextFirst.toFixed(2)),
+      second: Number(nextSecond.toFixed(2)),
+    };
+  }
+
+  if (secondAmount !== null && secondAmount !== undefined) {
+    const nextSecond = Math.max(0, Number(secondAmount) || 0);
+    const nextFirst = Math.max(0, Number(numericTotal - nextSecond) || 0);
+
+    return {
+      first: Number(nextFirst.toFixed(2)),
+      second: Number(nextSecond.toFixed(2)),
+    };
+  }
+
+  return {
+    first: Number(half.toFixed(2)),
+    second: Number(half.toFixed(2)),
+  };
+};
 
 // Styled components
 const PageContainer = styled(Box)(({ theme }) => ({
@@ -122,6 +157,9 @@ export const AddExpenditure = () => {
   const currUser = useSelector(u => u.user.currUser || {});
   const currSchool = useSelector(s => s.school.currSchool || {});
   const sumExps = useSelector(s => s.school.sumExps);
+  const allSchools = useSelector(s => s.school.allSchools || []);
+  const isAdmin = Number(currUser?.schoolSymbol) === 0;
+  const schoolOptions = (allSchools || []).filter(school => Number(school.schoolSymbol) !== 0);
 
   // Local state
   const [expDetails, setExpDetails] = useState({
@@ -131,6 +169,12 @@ export const AddExpenditure = () => {
     categoryName: '',
     invoiceNum: ''
   });
+
+  const [selectedSchoolSymbol, setSelectedSchoolSymbol] = useState('');
+  const [sharedSchoolOne, setSharedSchoolOne] = useState('');
+  const [sharedSchoolTwo, setSharedSchoolTwo] = useState('');
+  const [sharedExpense, setSharedExpense] = useState(false);
+  const [sharedAmounts, setSharedAmounts] = useState({ first: 0, second: 0 });
 
   const [errors, setErrors] = useState({
     expSum: false,
@@ -150,16 +194,38 @@ export const AddExpenditure = () => {
   // Fetch data on component mount
   useEffect(() => {
     const fetchData = async () => {
-      if (!currUser?.schoolSymbol) return;
+      if (!currUser?.schoolSymbol && !isAdmin) return;
 
       await dispatch(allCategoriesThunk());
       await dispatch(allSupplierThunk());
-      await dispatch(getSchoolBySsymbolThunk(currUser.schoolSymbol));
-      await dispatch(GetSumOfEpendituresOfSchool(currUser.schoolSymbol));
+      await dispatch(allSchoolsThunk());
+
+      if (currUser?.schoolSymbol) {
+        await dispatch(getSchoolBySsymbolThunk(currUser.schoolSymbol));
+        await dispatch(GetSumOfEpendituresOfSchool(currUser.schoolSymbol));
+      }
     };
 
     fetchData();
-  }, [dispatch, currUser?.schoolSymbol]);
+  }, [dispatch, currUser?.schoolSymbol, isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin && currUser?.schoolSymbol) {
+      setSelectedSchoolSymbol(Number(currUser.schoolSymbol));
+    }
+  }, [isAdmin, currUser?.schoolSymbol]);
+
+  useEffect(() => {
+    if (!sharedExpense || !expDetails.expSum) {
+      if (sharedExpense && !expDetails.expSum) {
+        setSharedAmounts({ first: 0, second: 0 });
+      }
+      return;
+    }
+
+    const total = Number(expDetails.expSum) || 0;
+    setSharedAmounts(buildSharedAmounts(total));
+  }, [expDetails.expSum, sharedExpense]);
 
   // Filter suppliers based on input
   useEffect(() => {
@@ -188,9 +254,32 @@ export const AddExpenditure = () => {
   // Handle input change and clear errors when field is filled
   const handleInputChange = (field, value) => {
     setExpDetails(prev => ({ ...prev, [field]: value }));
+
+    if (field === 'expSum' && sharedExpense) {
+      const total = Number(value) || 0;
+      setSharedAmounts(buildSharedAmounts(total));
+    }
+
     if (value && errors[field]) {
       setErrors(prev => ({ ...prev, [field]: false }));
     }
+  };
+
+  const handleSharedAmountChange = (position, value) => {
+    const total = Number(expDetails.expSum) || 0;
+    if (!total) {
+      setSharedAmounts({ first: 0, second: 0 });
+      return;
+    }
+
+    const nextAmounts = buildSharedAmounts(total, position === 'first' ? value : undefined, position === 'second' ? value : undefined);
+
+    if (position === 'first') {
+      setSharedAmounts({ first: Number(nextAmounts.first), second: Number(nextAmounts.second) });
+      return;
+    }
+
+    setSharedAmounts({ first: Number(nextAmounts.first), second: Number(nextAmounts.second) });
   };
 
   // Validate form fields
@@ -202,6 +291,31 @@ export const AddExpenditure = () => {
       categoryName: !expDetails.categoryName.trim(),
       invoiceNum: !expDetails.invoiceNum || isNaN(expDetails.invoiceNum) || parseInt(expDetails.invoiceNum) <= 0
     };
+
+    if (isAdmin && !sharedExpense && !selectedSchoolSymbol) {
+      alert('יש לבחור מוסד להוצאה');
+      return false;
+    }
+
+    if (isAdmin && sharedExpense) {
+      if (!sharedSchoolOne || !sharedSchoolTwo) {
+        alert('יש לבחור שני מוסדות להוצאה משותפת');
+        return false;
+      }
+
+      if (Number(sharedSchoolOne) === Number(sharedSchoolTwo)) {
+        alert('יש לבחור שני מוסדות שונים להוצאה משותפת');
+        return false;
+      }
+
+      const totalShared = Number(sharedAmounts.first) + Number(sharedAmounts.second);
+      const totalRequested = Number(expDetails.expSum) || 0;
+
+      if (Math.abs(totalShared - totalRequested) > 0.01) {
+        alert('סכום ההוצאה המשותפת חייב להיות שווה לסכום הכולל');
+        return false;
+      }
+    }
 
     setErrors(newErrors);
 
@@ -257,53 +371,69 @@ export const AddExpenditure = () => {
         category => category.categoryName?.trim().toLowerCase() === expDetails.categoryName.trim().toLowerCase()
       );
 
-      // const newExp = {
-      //   schoolSymbol: currUser.schoolSymbol ?? currSchool.schoolSymbol,
-      //   schoolName: currSchool.schoolName || '',
-      //   budget: Number(currSchool.budget) || 0,
-      //   expenditureSum: Number(expDetails.expSum),
-      //   categoryName: selectedCategory?.categoryName || expDetails.categoryName.trim(),
-      //   supplierName: selectedSupplier?.supplierName || expDetails.supName.trim(),
-      //   categoryId: selectedCategory?.id ?? null,
-      //   supplierId: selectedSupplier?.id ?? null,
-      //   date: new Date().toISOString(),
-      //   ordererName: expDetails.ordererName.trim(),
-      //   invoiceNum: Number(expDetails.invoiceNum),
-      //   isAccepted: false,
-      //   amountPaid: 0,
-      //   remainToPay: Number(expDetails.expSum)
-      // };
+      const getSchoolTotal = async (schoolSymbol) => {
+        const response = await fetch(`https://localhost:7086/api/School/GetSumOfEpendituresOfSchool/${schoolSymbol}`);
 
-const newExp = {
-  schoolSymbol: currUser.schoolSymbol ?? currSchool.schoolSymbol,
-  expenditureSum: Number(expDetails.expSum),
-  categoryId: Number(selectedCategory?.categoryId ?? selectedCategory?.id ?? 0),
-  categoryName: selectedCategory?.categoryName || expDetails.categoryName.trim(),
-  supplierId: Number(selectedSupplier?.licensedNum ?? selectedSupplier?.id ?? 0),
-  supplierName: selectedSupplier?.supplierName || expDetails.supName.trim(),
-  date: new Date().toISOString(),
-  ordererName: expDetails.ordererName.trim(),
-  invoiceNum: Number(expDetails.invoiceNum),
-  isAccepted: false,
-  amountPaid: 0
-};
+        if (!response.ok) {
+          return 0;
+        }
 
-      const currentTotal = Number(sumExps) || 0;
-      const schoolBudget = Number(currSchool.budget) || 0;
+        const data = await response.json();
+        return Number(data) || 0;
+      };
 
-      if (currentTotal + newExp.expenditureSum > schoolBudget) {
-        alert("הסכום הכולל של ההוצאות חורג מהתקציב של המוסד");
-        return;
+      const buildPayloadForSchool = (schoolSymbol, amount) => ({
+        schoolSymbol: Number(schoolSymbol),
+        expenditureSum: Number(amount),
+        categoryId: Number(selectedCategory?.categoryId ?? selectedCategory?.id ?? 0),
+        categoryName: selectedCategory?.categoryName || expDetails.categoryName.trim(),
+        supplierId: Number(selectedSupplier?.licensedNum ?? selectedSupplier?.id ?? 0),
+        supplierName: selectedSupplier?.supplierName || expDetails.supName.trim(),
+        date: new Date().toISOString(),
+        ordererName: expDetails.ordererName.trim(),
+        invoiceNum: Number(expDetails.invoiceNum),
+        isAccepted: false,
+        amountPaid: 0
+      });
+
+      const schoolEntries = isAdmin && sharedExpense
+        ? [
+            { schoolSymbol: sharedSchoolOne, amount: Number(sharedAmounts.first) },
+            { schoolSymbol: sharedSchoolTwo, amount: Number(sharedAmounts.second) }
+          ]
+        : [
+            {
+              schoolSymbol: Number(selectedSchoolSymbol || currUser.schoolSymbol || currSchool.schoolSymbol),
+              amount: Number(expDetails.expSum)
+            }
+          ];
+
+      const schoolBudgetMap = new Map(
+        (allSchools || []).map(school => [Number(school.schoolSymbol), Number(school.budget || 0)])
+      );
+
+      for (const entry of schoolEntries) {
+        const schoolSymbol = Number(entry.schoolSymbol);
+        const schoolBudget = schoolBudgetMap.get(schoolSymbol) || Number(currSchool?.budget || 0);
+        const currentSchoolTotal = await getSchoolTotal(schoolSymbol);
+
+        if (schoolBudget > 0 && currentSchoolTotal + Number(entry.amount) > schoolBudget) {
+          alert('הסכום הכולל של ההוצאות חורג מהתקציב של המוסד הנבחר');
+          return;
+        }
       }
 
-      // Log payload to verify what is sent to the backend
-      console.log('Posting expenditure payload:', JSON.stringify(newExp));
-      await dispatch(addExpThunk(newExp));
-      await dispatch(GetSumOfEpendituresOfSchool(currUser.schoolSymbol ?? currSchool.schoolSymbol));
+      const payloads = schoolEntries.map(entry => buildPayloadForSchool(entry.schoolSymbol, entry.amount));
+
+      console.log('Posting expenditure payloads:', JSON.stringify(payloads));
+
+      for (const payload of payloads) {
+        await dispatch(addExpThunk(payload));
+        await dispatch(GetSumOfEpendituresOfSchool(payload.schoolSymbol));
+      }
 
       setSuccess(true);
 
-      // Reset form after successful submission
       setExpDetails({
         expSum: '',
         supName: '',
@@ -311,6 +441,8 @@ const newExp = {
         categoryName: '',
         invoiceNum: ''
       });
+      setSharedAmounts({ first: 0, second: 0 });
+      setSharedExpense(false);
 
     } catch (error) {
       console.error("Error adding expenditure:", error);
@@ -484,6 +616,217 @@ const newExp = {
                   }}
                 />
               </Grid>
+
+              {isAdmin && (
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: colors.text }}>
+                      מוסד
+                    </Typography>
+                    <Button
+                      variant={sharedExpense ? 'contained' : 'outlined'}
+                      onClick={() => setSharedExpense(prev => !prev)}
+                      sx={{
+                        bgcolor: sharedExpense ? colors.primary : 'transparent',
+                        color: sharedExpense ? 'white' : colors.primary,
+                        borderColor: colors.primary,
+                        borderRadius: 20,
+                        fontFamily: 'Rubik, sans-serif',
+                        textTransform: 'none',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {sharedExpense ? 'ביטול הוצאה משותפת' : 'הוצאה משותפת'}
+                    </Button>
+                  </Box>
+
+                  {sharedExpense ? (
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={6}>
+                        <Autocomplete
+                          freeSolo
+                          openOnFocus
+                          options={schoolOptions}
+                          getOptionLabel={(option) => typeof option === 'string' ? option : `${option.schoolName} (${option.schoolSymbol})`}
+                          value={sharedSchoolOne ? schoolOptions.find(school => Number(school.schoolSymbol) === Number(sharedSchoolOne)) || null : null}
+                          onInputChange={(event, newInputValue) => {
+                            if (!newInputValue) {
+                              setSharedSchoolOne('');
+                              return;
+                            }
+
+                            const exactMatch = schoolOptions.find(school =>
+                              `${school.schoolName} (${school.schoolSymbol})`.toLowerCase() === newInputValue.trim().toLowerCase() ||
+                              String(school.schoolSymbol) === newInputValue.trim()
+                            );
+
+                            setSharedSchoolOne(exactMatch ? Number(exactMatch.schoolSymbol) : '');
+                          }}
+                          onChange={(event, newValue) => {
+                            if (!newValue) {
+                              setSharedSchoolOne('');
+                              return;
+                            }
+
+                            const school = typeof newValue === 'string'
+                              ? schoolOptions.find(option => `${option.schoolName} (${option.schoolSymbol})` === newValue)
+                              : newValue;
+
+                            setSharedSchoolOne(school ? Number(school.schoolSymbol) : '');
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="שם מוסד א"
+                              variant="outlined"
+                              InputProps={{
+                                ...params.InputProps,
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <BusinessIcon sx={{ color: colors.primary }} />
+                                  </InputAdornment>
+                                ),
+                              }}
+                            />
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} md={6}>
+                        <Autocomplete
+                          freeSolo
+                          openOnFocus
+                          options={schoolOptions}
+                          getOptionLabel={(option) => typeof option === 'string' ? option : `${option.schoolName} (${option.schoolSymbol})`}
+                          value={sharedSchoolTwo ? schoolOptions.find(school => Number(school.schoolSymbol) === Number(sharedSchoolTwo)) || null : null}
+                          onInputChange={(event, newInputValue) => {
+                            if (!newInputValue) {
+                              setSharedSchoolTwo('');
+                              return;
+                            }
+
+                            const exactMatch = schoolOptions.find(school =>
+                              `${school.schoolName} (${school.schoolSymbol})`.toLowerCase() === newInputValue.trim().toLowerCase() ||
+                              String(school.schoolSymbol) === newInputValue.trim()
+                            );
+
+                            setSharedSchoolTwo(exactMatch ? Number(exactMatch.schoolSymbol) : '');
+                          }}
+                          onChange={(event, newValue) => {
+                            if (!newValue) {
+                              setSharedSchoolTwo('');
+                              return;
+                            }
+
+                            const school = typeof newValue === 'string'
+                              ? schoolOptions.find(option => `${option.schoolName} (${option.schoolSymbol})` === newValue)
+                              : newValue;
+
+                            setSharedSchoolTwo(school ? Number(school.schoolSymbol) : '');
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="שם מוסד ב"
+                              variant="outlined"
+                              InputProps={{
+                                ...params.InputProps,
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <BusinessIcon sx={{ color: colors.primary }} />
+                                  </InputAdornment>
+                                ),
+                              }}
+                            />
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="סכום מוסד א"
+                          variant="outlined"
+                          value={sharedAmounts.first}
+                          onChange={(e) => handleSharedAmountChange('first', e.target.value)}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <AttachMoneyIcon sx={{ color: colors.primary }} />
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="סכום מוסד ב"
+                          variant="outlined"
+                          value={sharedAmounts.second}
+                          onChange={(e) => handleSharedAmountChange('second', e.target.value)}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <AttachMoneyIcon sx={{ color: colors.primary }} />
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+                  ) : (
+                    <Autocomplete
+                      freeSolo
+                      openOnFocus
+                      options={schoolOptions}
+                      getOptionLabel={(option) => typeof option === 'string' ? option : `${option.schoolName} (${option.schoolSymbol})`}
+                      value={selectedSchoolSymbol ? schoolOptions.find(school => Number(school.schoolSymbol) === Number(selectedSchoolSymbol)) || null : null}
+                      onInputChange={(event, newInputValue) => {
+                        if (!newInputValue) {
+                          setSelectedSchoolSymbol('');
+                          return;
+                        }
+
+                        const exactMatch = schoolOptions.find(school =>
+                          `${school.schoolName} (${school.schoolSymbol})`.toLowerCase() === newInputValue.trim().toLowerCase() ||
+                          String(school.schoolSymbol) === newInputValue.trim()
+                        );
+
+                        setSelectedSchoolSymbol(exactMatch ? Number(exactMatch.schoolSymbol) : '');
+                      }}
+                      onChange={(event, newValue) => {
+                        if (!newValue) {
+                          setSelectedSchoolSymbol('');
+                          return;
+                        }
+
+                        const school = typeof newValue === 'string'
+                          ? schoolOptions.find(option => `${option.schoolName} (${option.schoolSymbol})` === newValue)
+                          : newValue;
+
+                        setSelectedSchoolSymbol(school ? Number(school.schoolSymbol) : '');
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="שם מוסד"
+                          variant="outlined"
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <BusinessIcon sx={{ color: colors.primary }} />
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      )}
+                    />
+                  )}
+                </Grid>
+              )}
 
               {/* Supplier Name */}
               <Grid item xs={12} md={6}>
