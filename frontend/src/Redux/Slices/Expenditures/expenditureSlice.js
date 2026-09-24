@@ -35,8 +35,13 @@ export const expenditureSlice = createSlice({
             state.expenditureById = action.payload
         }) 
         builder.addCase(addExpThunk.fulfilled, (state,action)=>{
-            
-            // state.expenditureById = action.payload
+            // When an expenditure is successfully added, append it to the cached list
+            if (!state.allExpenditures) state.allExpenditures = [];
+            try {
+                state.allExpenditures.push(action.payload);
+            } catch (e) {
+                console.error('Failed to append new expenditure to state.allExpenditures', e);
+            }
             console.log("add a exp...");
         })
         builder.addCase(addExpThunk.rejected, (state,action)=>{
@@ -45,6 +50,21 @@ export const expenditureSlice = createSlice({
             console.log("רק🕳💫💨");
         })
         builder.addCase(updateExpenditureThunk.fulfilled, (state,action)=>{
+            // Update the cached expenditure in allExpenditures if present
+            try {
+                const updated = action.payload;
+                if (state.allExpenditures && updated && updated.id !== undefined) {
+                    const idx = state.allExpenditures.findIndex(e => e.id === updated.id);
+                    if (idx !== -1) {
+                        state.allExpenditures[idx] = {
+                            ...state.allExpenditures[idx],
+                            ...updated
+                        };
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to update expenditure in state.allExpenditures', e);
+            }
             console.log("update a exp...");
         })
         builder.addCase(updateExpenditureThunk.rejected, (state,action)=>{

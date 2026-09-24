@@ -48,6 +48,7 @@ import { AddSupplier } from "../supplier/addSupplier";
 import { AddCategory } from "../Categories/addCategory";
 
 import { getSchoolBySsymbolThunk, GetSumOfEpendituresOfSchool, allSchoolsThunk } from "../../Redux/Slices/Schools/getSchoolThunk";
+import { allExpendituresThunk } from "../../Redux/Slices/Expenditures/getExpendituresThunk";
 
 export const buildSharedAmounts = (totalAmount, firstAmount = null, secondAmount = null) => {
   const numericTotal = Number(totalAmount) || 0;
@@ -436,6 +437,13 @@ export const AddExpenditure = () => {
         await dispatch(GetSumOfEpendituresOfSchool(payload.schoolSymbol));
       }
 
+      // Refresh global expenditures list so reports/statistics reflect the new data
+      try {
+        await dispatch(allExpendituresThunk());
+      } catch (e) {
+        console.error('Failed to refresh allExpenditures after adding expenditure', e);
+      }
+
       setSuccess(true);
 
       setExpDetails({
@@ -468,7 +476,17 @@ export const AddExpenditure = () => {
   // Handle success message close
   const handleSuccessClose = () => {
     setSuccess(false);
-    navigate("/work");
+    // Navigate based on current user role: admins (schoolSymbol === 0) go to /home, others to /work
+    try {
+      const symbol = currUser?.schoolSymbol;
+      if (String(symbol) === '0' || Number(symbol) === 0) {
+        navigate('/home');
+      } else {
+        navigate('/work');
+      }
+    } catch (e) {
+      navigate('/work');
+    }
   };
 
   // Handle opening supplier dialog
