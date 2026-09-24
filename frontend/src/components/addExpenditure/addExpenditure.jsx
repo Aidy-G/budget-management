@@ -85,6 +85,67 @@ export const buildSharedAmounts = (totalAmount, firstAmount = null, secondAmount
   };
 };
 
+export const getBudgetStatus = ({ budget, currentTotal = 0, newTotal = 0 }) => {
+  const numericBudget = Number(budget) || 0;
+  const numericCurrentTotal = Number(currentTotal) || 0;
+  const numericNewTotal = Number(newTotal) || 0;
+  const projectedTotal = numericCurrentTotal + numericNewTotal;
+  const remainingBudget = numericBudget - projectedTotal;
+
+  if (numericBudget <= 0) {
+    return {
+      isExceeded: false,
+      projectedTotal,
+      remainingBudget,
+      message: '',
+    };
+  }
+
+  const isExceeded = projectedTotal > numericBudget;
+
+  return {
+    isExceeded,
+    projectedTotal,
+    remainingBudget,
+    message: isExceeded ? 'הסכום חורג מתקציב המוסד ' : '',
+  };
+};
+
+const sanitizePositiveDecimal = (value) => {
+  if (value === '') return '';
+
+  const cleaned = value.toString().replace(/[^0-9.]/g, '');
+  const dotIndex = cleaned.indexOf('.');
+
+  if (dotIndex === -1) {
+    return cleaned;
+  }
+
+  const integerPart = cleaned.slice(0, dotIndex).replace(/\D/g, '') || '0';
+  const decimalPart = cleaned.slice(dotIndex + 1).replace(/\./g, '').slice(0, 2);
+
+  return `${integerPart}.${decimalPart}`;
+};
+
+const sanitizePositiveInteger = (value) => value.toString().replace(/\D/g, '');
+
+const isPositiveDecimal = (value) => {
+  if (value === '' || value === null || value === undefined) return false;
+
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) && numericValue > 0;
+};
+
+const isPositiveInteger = (value) => {
+  if (value === '' || value === null || value === undefined) return false;
+
+  const trimmed = value.toString().trim();
+  if (!/^\d+$/.test(trimmed)) return false;
+
+  const numericValue = Number(trimmed);
+  return Number.isInteger(numericValue) && numericValue > 0;
+};
+
 // Styled components
 const PageContainer = styled(Box)(({ theme }) => ({
   minHeight: "100vh",
@@ -191,6 +252,7 @@ export const AddExpenditure = () => {
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [budgetWarning, setBudgetWarning] = useState({ isExceeded: false, message: '', projectedTotal: 0, remainingBudget: 0 });
   const [openSupplierDialog, setOpenSupplierDialog] = useState(false);
   const [openCategoryDialog, setOpenCategoryDialog] = useState(false);
   const [filteredSuppliers, setFilteredSuppliers] = useState([]);
@@ -232,6 +294,74 @@ export const AddExpenditure = () => {
     setSharedAmounts(buildSharedAmounts(total));
   }, [expDetails.expSum, sharedExpense]);
 
+  useEffect(() => {
+    if (!Number(expDetails.expSum) || Number(expDetails.expSum) <= 0) {
+      setBudgetWarning({ isExceeded: false, message: '', projectedTotal: 0, remainingBudget: 0 });
+      return;
+    }
+
+    const schoolEntries = isAdmin && sharedExpense
+      ? [
+          { schoolSymbol: sharedSchoolOne, amount: Number(sharedAmounts.first) || 0 },
+          { schoolSymbol: sharedSchoolTwo, amount: Number(sharedAmounts.second) || 0 },
+        ]
+      : [
+          {
+            schoolSymbol: Number(selectedSchoolSymbol || currUser?.schoolSymbol || currSchool?.schoolSymbol || 0),
+            amount: Number(expDetails.expSum) || 0,
+          },
+        ];
+
+    const activeEntries = schoolEntries.filter(entry => Number(entry.schoolSymbol) > 0);
+
+    if (!activeEntries.length) {
+      setBudgetWarning({ isExceeded: false, message: '', projectedTotal: 0, remainingBudget: 0 });
+      return;
+    }
+
+    const warning = activeEntries.reduce((result, entry) => {
+      const school = (allSchools || []).find(school => Number(school.schoolSymbol) === Number(entry.schoolSymbol));
+      const budget = Number(school?.budget || currSchool?.budget || 0);
+      const currentTotal = Number(school?.sumExps || sumExps || currSchool?.sumExps || 0);
+      const nextStatus = getBudgetStatus({ budget, currentTotal, newTotal: Number(entry.amount) || 0 });
+
+      if (nextStatus.isExceeded) {
+        return {
+          isExceeded: true,
+          projectedTotal: nextStatus.projectedTotal,
+          remainingBudget: nextStatus.remainingBudget,
+          message: nextStatus.message,
+        };
+      }
+
+      return result;
+    }, { isExceeded: false, message: '', projectedTotal: 0, remainingBudget: 0 });
+
+    setBudgetWarning(warning);
+  }, [
+    allSchools,
+    currSchool?.budget,
+    currSchool?.sumExps,
+    currUser?.schoolSymbol,
+    expDetails.expSum,
+    isAdmin,
+    selectedSchoolSymbol,
+    sharedAmounts.first,
+    sharedAmounts.second,
+    sharedExpense,
+    sharedSchoolOne,
+    sharedSchoolTwo,
+    sumExps,
+  ]);
+
+  const hasBudgetIssue = Boolean(budgetWarning.isExceeded);
+  const summarySchoolSymbol = Number(
+    (isAdmin && selectedSchoolSymbol) ? selectedSchoolSymbol : (currUser?.schoolSymbol || currSchool?.schoolSymbol || 0)
+  );
+  const summarySchool = (allSchools || []).find(school => Number(school.schoolSymbol) === summarySchoolSymbol) || currSchool || {};
+  const summaryBudget = Number(summarySchool?.budget || currSchool?.budget || 0);
+  const remainingBudget = summaryBudget - Number(sumExps || 0);
+
   // Filter suppliers based on input
   useEffect(() => {
     if (expDetails.supName.trim() !== '') {
@@ -258,14 +388,20 @@ export const AddExpenditure = () => {
 
   // Handle input change and clear errors when field is filled
   const handleInputChange = (field, value) => {
-    setExpDetails(prev => ({ ...prev, [field]: value }));
+    const sanitizedValue = field === 'expSum'
+      ? sanitizePositiveDecimal(value)
+      : field === 'invoiceNum'
+        ? sanitizePositiveInteger(value)
+        : value;
+
+    setExpDetails(prev => ({ ...prev, [field]: sanitizedValue }));
 
     if (field === 'expSum' && sharedExpense) {
-      const total = Number(value) || 0;
+      const total = Number(sanitizedValue) || 0;
       setSharedAmounts(buildSharedAmounts(total));
     }
 
-    if (value && errors[field]) {
+    if (sanitizedValue && errors[field]) {
       setErrors(prev => ({ ...prev, [field]: false }));
     }
   };
@@ -290,11 +426,11 @@ export const AddExpenditure = () => {
   // Validate form fields
   const validateForm = () => {
     const newErrors = {
-      expSum: !expDetails.expSum || isNaN(expDetails.expSum) || parseFloat(expDetails.expSum) <= 0,
+      expSum: !isPositiveDecimal(expDetails.expSum),
       supName: !expDetails.supName.trim(),
       ordererName: !expDetails.ordererName.trim(),
       categoryName: !expDetails.categoryName.trim(),
-      invoiceNum: !expDetails.invoiceNum || isNaN(expDetails.invoiceNum) || parseInt(expDetails.invoiceNum) <= 0
+      invoiceNum: !isPositiveInteger(expDetails.invoiceNum)
     };
 
     if (isAdmin && !sharedExpense && !selectedSchoolSymbol) {
@@ -343,6 +479,10 @@ export const AddExpenditure = () => {
 
   // Handle form submission
   const handleSubmit = async () => {
+    if (hasBudgetIssue) {
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -421,9 +561,14 @@ export const AddExpenditure = () => {
         const schoolSymbol = Number(entry.schoolSymbol);
         const schoolBudget = schoolBudgetMap.get(schoolSymbol) || Number(currSchool?.budget || 0);
         const currentSchoolTotal = await getSchoolTotal(schoolSymbol);
+        const budgetStatus = getBudgetStatus({
+          budget: schoolBudget,
+          currentTotal: currentSchoolTotal,
+          newTotal: Number(entry.amount) || 0,
+        });
 
-        if (schoolBudget > 0 && currentSchoolTotal + Number(entry.amount) > schoolBudget) {
-          alert('הסכום הכולל של ההוצאות חורג מהתקציב של המוסד הנבחר');
+        if (budgetStatus.isExceeded) {
+          setBudgetWarning(budgetStatus);
           return;
         }
       }
@@ -560,7 +705,65 @@ export const AddExpenditure = () => {
           </ActionButton>
         </Box>
 
-<p>סך הוצאות עד כה: {sumExps}</p>
+        <Box sx={{ mb: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: 3,
+              border: `1px solid ${colors.border}`,
+              background: 'linear-gradient(135deg, rgba(0,121,107,0.08), rgba(17,82,147,0.04))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+              fontFamily: 'Rubik, sans-serif',
+            }}
+          >
+            <Box sx={{ display: 'flex',alignItems: 'center',flexDirection: 'row', gap: 2.8,pt: 0.1, pb: 0.5 }}>
+              <Box>
+                <Typography variant="caption" sx={{ color: colors.textLight,fontSize: 15, fontWeight: 800, letterSpacing: 0.5, fontFamily: 'Rubik, sans-serif' }}>
+                 סך ההוצאות עד כה:
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: colors.primary, fontFamily: 'Rubik, sans-serif', lineHeight: 1.3 }}>
+                  {Number(sumExps || 0).toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="caption" sx={{ color: colors.textLight,fontSize: 15, fontWeight: 800, letterSpacing: 0.5, fontFamily: 'Rubik, sans-serif' }}>
+                  סך התקציב שנותר:
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 800,
+                    color: colors.primary,
+                    fontFamily: 'Rubik, sans-serif',
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {Number(remainingBudget || 0).toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪
+                </Typography>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                width: 52,
+                height: 52,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: `${colors.primary}16`,
+                color: colors.primary,
+                fontFamily: 'Rubik, sans-serif',
+              }}
+            >
+              <PaymentsIcon sx={{ fontSize: 24 }} />
+            </Box>
+          </Paper>
+        </Box>
         {/* Form Card */}
         <FormCard>
           <FormSection>
@@ -574,8 +777,14 @@ export const AddExpenditure = () => {
                   value={expDetails.expSum}
                   onChange={(e) => handleInputChange('expSum', e.target.value)}
                   error={errors.expSum}
-                  helperText={errors.expSum ? "יש להזין סכום הוצאה תקין (מספר חיובי)" : ""}
+                  helperText={errors.expSum ? "יש להזין סכום הוצאה תקין (מספר חיובי בלבד)" : ""}
+                  type="text"
+                  inputMode="decimal"
                   InputProps={{
+                    inputProps: {
+                      min: 0,
+                      step: '0.01',
+                    },
                     startAdornment: (
                       <InputAdornment position="start">
                         <PaymentsIcon sx={{ color: colors.primary }} />
@@ -611,8 +820,14 @@ export const AddExpenditure = () => {
                   value={expDetails.invoiceNum}
                   onChange={(e) => handleInputChange('invoiceNum', e.target.value)}
                   error={errors.invoiceNum}
-                  helperText={errors.invoiceNum ? "יש להזין מספר חשבונית תקין" : ""}
+                  helperText={errors.invoiceNum ? "יש להזין מספר חשבונית תקין (מספר חיובי בלבד)" : ""}
+                  type="text"
+                  inputMode="numeric"
                   InputProps={{
+                    inputProps: {
+                      min: 1,
+                      step: '1',
+                    },
                     startAdornment: (
                       <InputAdornment position="start">
                         <ReceiptIcon sx={{ color: colors.primary }} />
@@ -1047,24 +1262,49 @@ export const AddExpenditure = () => {
               </Grid>
             </Grid>
 
+            {budgetWarning.isExceeded && (
+              <Box sx={{ mt: 3 }}>
+                <Alert
+                  severity="error"
+                  variant="filled"
+                  sx={{
+                    borderRadius: 2,
+                    fontFamily: 'Rubik, sans-serif',
+                    direction: 'rtl',
+                    boxShadow: '0 4px 18px rgba(211, 47, 47, 0.12)',
+                    py: 1.5,
+                    px: 2,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start' }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: '1rem', lineHeight: 1.5 }}>
+                      {budgetWarning.message}
+                    </Typography>
+                  </Box>
+                </Alert>
+              </Box>
+            )}
+
             {/* Submit Button */}
             <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
               <ActionButton
                 variant="contained"
-                disabled={loading}
+                disabled={loading || hasBudgetIssue}
                 startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <AddCircleOutlineIcon sx={{ marginLeft: "10px" }} />}
                 sx={{
-                  bgcolor: colors.primary,
+                  bgcolor: hasBudgetIssue ? '#bdbdbd' : colors.primary,
                   color: "white",
                   minWidth: 200,
                   "&:hover": {
-                    bgcolor: colors.primaryDark,
+                    bgcolor: hasBudgetIssue ? '#bdbdbd' : colors.primaryDark,
                   },
                   fontFamily: 'Rubik, sans-serif',
+                  opacity: hasBudgetIssue ? 0.8 : 1,
+                  cursor: hasBudgetIssue ? 'not-allowed' : 'pointer',
                 }}
                 onClick={handleSubmit}
               >
-                {loading ? "מוסיף הוצאה..." : "הוסף הוצאה"}
+                {loading ? "מוסיף הוצאה..." : hasBudgetIssue ? "לא ניתן להוסיף הוצאה" : "הוסף הוצאה"}
               </ActionButton>
             </Box>
           </FormSection>
